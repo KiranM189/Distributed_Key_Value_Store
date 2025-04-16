@@ -1,78 +1,80 @@
 #include "kvstore.hpp"
 
+// input validation 
+
 const char* MUTEX_NAME = "SharedMapMutex";
 
-KvStore& KvStore::get_instance() {
-    static KvStore instance;
+KvStore& KvStore::get_instance(int size) {
+    static KvStore instance(size);
     return instance;
 }
 
-KvStore::KvStore() {
-    create();
-}
-
-managed_shared_memory KvStore::get_shared_memory() {
-    return managed_shared_memory(open_only, "Project");
-}
-
-newmap* KvStore::get_shared_map(managed_shared_memory& shared) {
-    return shared.find<newmap>("SharedMap").first;
-}
-
-void KvStore::create() {
+KvStore::KvStore(int size) {
     try {
-        managed_shared_memory segment(create_only, "Project", 10000);
-        newallocator allocate(segment.get_segment_manager());
-        segment.construct<newmap>("SharedMap")(std::less<int>(), allocate);
+        
+        shared_mem = new managed_shared_memory(create_only, "Project", size);
+        newallocator allocate(shared_mem->get_segment_manager());
+        map_ptr = shared_mem->construct<newmap>("SharedMap")(std::less<int>(), allocate);
+
         named_mutex::remove(MUTEX_NAME);
         named_mutex mutex(create_only, MUTEX_NAME);
+
         std::cout << "Shared memory and mutex created successfully." << std::endl;
     } catch (interprocess_exception &e) {
-        std::cout << "Shared memory already exists. Skipping creation..." << std::endl;
+        // If already exists, open it
+        shared_mem = new managed_shared_memory(open_only, "Project");
+        map_ptr = shared_mem->find<newmap>("SharedMap").first;
+        std::cout << "Shared memory already exists. Opened instead.\n";
     }
 }
 
+
+
 void KvStore::Insert(int key, const std::string& value) {
     try {
-        managed_shared_memory shared = get_shared_memory();
-        newmap* map = get_shared_map(shared);
-        if (!map) {
+        if (!map_ptr) {
             std::cout << "Map not found in shared memory." << std::endl;
             return;
         }
+
         named_mutex mutex(open_only, MUTEX_NAME);
         boost::interprocess::scoped_lock<named_mutex> lock(mutex);
-        CharAllocator char_allocator(shared.get_segment_manager());
-        if (map->find(key) == map->end()) {
-            map->insert(std::pair<int, MyShmString>(key, MyShmString(value.c_str(), char_allocator)));
+
+        CharAllocator char_allocator(shared_mem->get_segment_manager());
+
+        if (map_ptr->find(key) == map_ptr->end()) {
+            map_ptr->insert(std::make_pair(key, MyShmString(value.c_str(), char_allocator)));
             std::cout << "Inserted key " << key << " with value: " << value << std::endl;
         } else {
             std::cout << "Key already exists. Use update instead.\n";
         }
-    } catch (std::exception &e) {
+
+    } catch (const std::exception& e) {
         std::cout << "Error: " << e.what() << std::endl;
     }
 }
 
+
 void KvStore::Update(int key, const std::string& new_value) {
     try {
-        managed_shared_memory shared = get_shared_memory();
-        newmap* map = get_shared_map(shared);
-        if (!map) {
+        if (!map_ptr) {
             std::cout << "Map not found in shared memory." << std::endl;
             return;
         }
+
         named_mutex mutex(open_only, MUTEX_NAME);
         boost::interprocess::scoped_lock<named_mutex> lock(mutex);
-        auto it = map->find(key);
-        if (it != map->end()) {
-            CharAllocator char_alloc(shared.get_segment_manager());
+
+        auto it = map_ptr->find(key);
+        if (it != map_ptr->end()) {
+            CharAllocator char_alloc(shared_mem->get_segment_manager());            
             MyShmString shm_string(new_value.c_str(), char_alloc);
             it->second = shm_string;
             std::cout << "Key " << key << " updated to: " << new_value << std::endl;
         } else {
             std::cout << "Key not found." << std::endl;
         }
+
     } catch (std::exception &e) {
         std::cout << "Error: " << e.what() << std::endl;
     }
@@ -80,21 +82,22 @@ void KvStore::Update(int key, const std::string& new_value) {
 
 void KvStore::Delete(int key) {
     try {
-        managed_shared_memory shared = get_shared_memory();
-        newmap* map = get_shared_map(shared);
-        if (!map) {
+        if (!map_ptr) {
             std::cout << "Map not found in shared memory." << std::endl;
             return;
         }
+
         named_mutex mutex(open_only, MUTEX_NAME);
         boost::interprocess::scoped_lock<named_mutex> lock(mutex);
-        auto it = map->find(key);
-        if (it != map->end()) {
-            map->erase(it);
+
+        auto it = map_ptr->find(key);
+        if (it != map_ptr->end()) {
+            map_ptr->erase(it);
             std::cout << "Key " << key << " deleted." << std::endl;
         } else {
             std::cout << "Key not found." << std::endl;
         }
+
     } catch (std::exception &e) {
         std::cout << "Error: " << e.what() << std::endl;
     }
@@ -102,21 +105,47 @@ void KvStore::Delete(int key) {
 
 void KvStore::Find(int key) {
     try {
-        managed_shared_memory shared = get_shared_memory();
-        newmap* map = get_shared_map(shared);
-        if (!map) {
+        if (!map_ptr) {
             std::cout << "Map not found in shared memory." << std::endl;
             return;
         }
+
         named_mutex mutex(open_only, MUTEX_NAME);
         boost::interprocess::scoped_lock<named_mutex> lock(mutex);
-        auto it = map->find(key);
-        if (it != map->end()) {
+
+        auto it = map_ptr->find(key);
+        if (it != map_ptr->end()) {
             std::cout << "Found key " << key << " with value: " << it->second << std::endl;
         } else {
             std::cout << "Key not found." << std::endl;
         }
+        
     } catch (std::exception &e) {
         std::cout << "Error: " << e.what() << std::endl;
+    }
+}
+
+KvStore::~KvStore() {
+    try {
+
+        managed_shared_memory segment(open_only, "Project");
+
+        segment.destroy<newmap>("SharedMap");
+
+        std::cout << "Destroyed map from shared memory." << std::endl;
+    } catch (...) {
+        std::cout << "Map destruction failed or already done.\n";
+    }
+
+    if (shared_memory_object::remove("Project")) {
+        std::cout << "Shared memory segment removed." << std::endl;
+    } else {
+        std::cout << "Shared memory segment removal failed or already removed.\n";
+    }
+
+    if (named_mutex::remove(MUTEX_NAME)) {
+        std::cout << "Named mutex removed." << std::endl;
+    } else {
+        std::cout << "Named mutex removal failed or already removed.\n";
     }
 }

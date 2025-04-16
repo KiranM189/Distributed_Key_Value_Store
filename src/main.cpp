@@ -1,10 +1,23 @@
-// main.cpp
 #include "kvstore.hpp"
 #include <iostream>
-#include <limits>
+#include <cstdlib>  // for std::atoi
 
-int main() {
-    KvStore& kv = KvStore::get_instance();
+int main(int argc, char* argv[]) {
+    int mem_size = 0;
+
+    if (argc == 2) {
+        mem_size = std::atoi(argv[1]);
+        if (mem_size <= 0) {
+            std::cerr << "Invalid memory size. Must be a positive integer.\n";
+            return 1;
+        }
+    } else {
+        mem_size = 1024 * 1024;
+        std::cout << "No memory size provided. Using default size: " << mem_size << " bytes (1 MB)\n";
+    }
+
+
+    KvStore& kv = KvStore::get_instance(mem_size);
 
     int choice;
     while (true) {
@@ -15,6 +28,13 @@ int main() {
         std::cout << "5. Exit\n";
         std::cout << "Enter your choice: ";
         std::cin >> choice;
+
+        if (std::cin.fail()) {
+            std::cin.clear(); // Clear the fail flag
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // Discard bad input
+            std::cout << "Invalid input. Please enter a number between 1 and 5.\n";
+            continue;
+        }
 
         int key;
         std::string value;
@@ -59,3 +79,6 @@ int main() {
         }
     }
 }
+
+
+//g++ -o kvstore main.cpp kvstore.cpp -I/home/zhenkar/HPE/boost_1_87_0/boost -L/home/zhenkar/HPE/boost_1_87_0/stage/lib

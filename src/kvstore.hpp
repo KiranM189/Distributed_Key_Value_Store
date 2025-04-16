@@ -1,6 +1,6 @@
-// kvstore.h
 #ifndef KVSTORE_H
 #define KVSTORE_H
+
 
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/containers/map.hpp>
@@ -24,19 +24,24 @@ extern const char* MUTEX_NAME;
 
 class KvStore {
 public:
-    static KvStore& get_instance();
+    static KvStore& get_instance(int size);   
     void Insert(int key, const std::string& value);
     void Update(int key, const std::string& new_value);
     void Delete(int key);
     void Find(int key);
 
 private:
-    KvStore();
-    managed_shared_memory get_shared_memory();
-    newmap* get_shared_map(managed_shared_memory& shared);
+    KvStore(int size);
+    managed_shared_memory* shared_mem = nullptr;
+    newmap* map_ptr = nullptr;
+
     void create();
+
     KvStore(const KvStore&) = delete;
     KvStore& operator=(const KvStore&) = delete;
+    ~KvStore();
+
 };
 
 #endif
+
