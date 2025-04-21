@@ -108,7 +108,7 @@ std::string KvStore::Find(int key) {
     try {
         if (!map_ptr) {
             std::cout << "Map not found in shared memory." << std::endl;
-            return;
+            return "Map not found";
         }
 
         named_mutex mutex(open_only, MUTEX_NAME);
