@@ -1,4 +1,5 @@
 #include "kvstore.hpp"
+#include <string.h>
 
 // input validation 
 
@@ -103,7 +104,7 @@ void KvStore::Delete(int key) {
     }
 }
 
-void KvStore::Find(int key) {
+std::string KvStore::Find(int key) {
     try {
         if (!map_ptr) {
             std::cout << "Map not found in shared memory." << std::endl;
@@ -115,9 +116,13 @@ void KvStore::Find(int key) {
 
         auto it = map_ptr->find(key);
         if (it != map_ptr->end()) {
+            std::string normal_str = static_cast<std::string>(it->second);
+            return normal_str;
+
+
             std::cout << "Found key " << key << " with value: " << it->second << std::endl;
         } else {
-            std::cout << "Key not found." << std::endl;
+            return "key not found";
         }
         
     } catch (std::exception &e) {

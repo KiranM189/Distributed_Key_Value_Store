@@ -1,6 +1,6 @@
 #ifndef KVSTORE_H
 #define KVSTORE_H
-
+#include <string.h>
 
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/containers/map.hpp>
@@ -28,7 +28,7 @@ public:
     void Insert(int key, const std::string& value);
     void Update(int key, const std::string& new_value);
     void Delete(int key);
-    void Find(int key);
+    std::string Find(int key);
 
 private:
     KvStore(int size);
