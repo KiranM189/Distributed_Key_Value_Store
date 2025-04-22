@@ -1,33 +1,43 @@
 #include "kvstore.hpp"
 #include <string.h>
 
-// input validation 
-
 const char* MUTEX_NAME = "SharedMapMutex";
 
+
 KvStore& KvStore::get_instance(int size) {
+    std::cout << "[get_instance] Before creating static instance\n";
     static KvStore instance(size);
+    std::cout << "[get_instance] Returning instance\n";
     return instance;
 }
 
 KvStore::KvStore(int size) {
+    std::cout << "[KvStore] Constructor started\n";
     try {
-        
         shared_mem = new managed_shared_memory(create_only, "Project", size);
+        std::cout << "[KvStore] Shared memory created\n";
+
         newallocator allocate(shared_mem->get_segment_manager());
         map_ptr = shared_mem->construct<newmap>("SharedMap")(std::less<int>(), allocate);
+        std::cout << "[KvStore] Map constructed\n";
 
-        named_mutex::remove(MUTEX_NAME);
-        named_mutex mutex(create_only, MUTEX_NAME);
+        if (!named_mutex::remove(MUTEX_NAME))
+            std::cout << "[KvStore] Warning: failed to remove existing mutex\n";
 
-        std::cout << "Shared memory and mutex created successfully." << std::endl;
+        named_mutex mutex(open_or_create, MUTEX_NAME);
+        std::cout << "[KvStore] Mutex created\n";
+
     } catch (interprocess_exception &e) {
-        // If already exists, open it
+        std::cout << "[KvStore] Caught interprocess exception: " << e.what() << std::endl;
         shared_mem = new managed_shared_memory(open_only, "Project");
         map_ptr = shared_mem->find<newmap>("SharedMap").first;
-        std::cout << "Shared memory already exists. Opened instead.\n";
+        std::cout << "[KvStore] Opened existing shared memory\n";
     }
+
+    std::cout << "[KvStore] Constructor finished\n";
 }
+
+
 
 
 
@@ -38,20 +48,33 @@ void KvStore::Insert(int key, const std::string& value) {
             return;
         }
 
-        named_mutex mutex(open_only, MUTEX_NAME);
-        boost::interprocess::scoped_lock<named_mutex> lock(mutex);
+        try {
+            named_mutex mutex(open_only, MUTEX_NAME);
+            boost::interprocess::scoped_lock<named_mutex> lock(mutex);
 
-        CharAllocator char_allocator(shared_mem->get_segment_manager());
+            try {
+                CharAllocator char_allocator(shared_mem->get_segment_manager());
 
-        if (map_ptr->find(key) == map_ptr->end()) {
-            map_ptr->insert(std::make_pair(key, MyShmString(value.c_str(), char_allocator)));
-            std::cout << "Inserted key " << key << " with value: " << value << std::endl;
-        } else {
-            std::cout << "Key already exists. Use update instead.\n";
+                if (map_ptr->find(key) == map_ptr->end()) {
+                    try {
+                        map_ptr->insert(std::make_pair(key, MyShmString(value.c_str(), char_allocator)));
+                        std::cout << "Inserted key " << key << " with value: " << value << std::endl;
+                    } catch (const std::exception& e) {
+                        std::cout << "Error during insertion: " << e.what() << std::endl;
+                    }
+                } else {
+                    std::cout << "Key already exists. Use update instead.\n";
+                }
+            } catch (const std::exception& e) {
+                std::cout << "Error with shared memory allocation or map operations: " << e.what() << std::endl;
+            }
+
+        } catch (const std::exception& e) {
+            std::cout << "Error acquiring mutex or locking: " << e.what() << std::endl;
         }
 
     } catch (const std::exception& e) {
-        std::cout << "Error: " << e.what() << std::endl;
+        std::cout << "Unexpected error in Insert function: " << e.what() << std::endl;
     }
 }
 
@@ -116,7 +139,7 @@ std::string KvStore::Find(int key) {
 
         auto it = map_ptr->find(key);
         if (it != map_ptr->end()) {
-            std::string normal_str = static_cast<std::string>(it->second);
+            std::string normal_str = std::string(it->second.c_str());
             return normal_str;
 
 
