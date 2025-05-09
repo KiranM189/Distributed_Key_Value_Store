@@ -1,16 +1,16 @@
-// Entry point for kv_server_manager
 #include "KVServer.hpp"
+#include "kvstore.hpp"
+
+
+namespace tl = thallium;
 
 int main(int argc, char** argv) {
-    std::unordered_map<int, double> mp;
-    mp[3] = 3.33;
-    mp[5] = 5.55;
-    mp[6] = 6.66;
-    mp[7] = 7.77;
 
-    KVServer server("tcp", mp);
-    std::cout << "Server running at " << server.get_addr() << std::endl;
-    server.run();
-
-    return 0;
+        uint16_t provider_id = 1;
+        tl::engine myEngine("tcp", THALLIUM_SERVER_MODE);
+        std::cout << "Server running at " << myEngine.self() << '\n';
+        KvStore &kv = KvStore::get_instance(1024);
+        KVServer server(myEngine, kv, provider_id);
+        myEngine.wait_for_finalize();
+        return 0;
 }

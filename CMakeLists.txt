@@ -13,21 +13,26 @@ pkg_check_modules(MARGO REQUIRED IMPORTED_TARGET margo)
 pkg_check_modules(ABT REQUIRED IMPORTED_TARGET argobots)
 pkg_check_modules(MERCURY REQUIRED IMPORTED_TARGET mercury)
 
-# Find Thallium (if it provides a CMake package)
+# Find Thallium
 find_package(thallium REQUIRED)
+
+# Find Boost (header-only libraries or specific ones if needed)
+find_package(Boost REQUIRED)
 
 # Include directories
 include_directories(include)
+include_directories(${Boost_INCLUDE_DIRS})
 
 # Add server executable
-add_executable(kvm_server src/KVServer.cpp src/main_server.cpp)
+add_executable(kvm_server src/KVServer.cpp src/KvStore.cpp src/server_main.cpp)
 
-# Link the libraries (Margo, Argobots, Mercury, Thallium)
+# Link the libraries (Margo, Argobots, Mercury, Thallium, Boost)
 target_link_libraries(kvm_server
     PkgConfig::MARGO
     PkgConfig::ABT
     PkgConfig::MERCURY
     thallium
+    Boost::boost
 )
 
 target_include_directories(kvm_server PRIVATE
@@ -35,16 +40,18 @@ target_include_directories(kvm_server PRIVATE
     ${ABT_INCLUDE_DIRS}
     ${MERCURY_INCLUDE_DIRS}
     ${THALLIUM_INCLUDE_DIRS}
+    ${Boost_INCLUDE_DIRS}
 )
 
 # Add client executable
-add_executable(kvm_client src/KVClient.cpp src/main_client.cpp)
+add_executable(kvm_client src/KVClient.cpp src/KvStore.cpp src/client_main.cpp)
 
 target_link_libraries(kvm_client
     PkgConfig::MARGO
     PkgConfig::ABT
     PkgConfig::MERCURY
     thallium
+    Boost::boost
 )
 
 target_include_directories(kvm_client PRIVATE
@@ -52,4 +59,5 @@ target_include_directories(kvm_client PRIVATE
     ${ABT_INCLUDE_DIRS}
     ${MERCURY_INCLUDE_DIRS}
     ${THALLIUM_INCLUDE_DIRS}
+    ${Boost_INCLUDE_DIRS}
 )

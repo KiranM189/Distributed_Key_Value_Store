@@ -1,48 +1,130 @@
 #include "KVClient.hpp"
+#include <chrono>
+#include <ctime>
+#include <thallium/serialization/stl/string.hpp>
+#include "kvstore.hpp"
 
-KVClient::KVClient(const std::string& protocol) : myEngine(protocol, THALLIUM_CLIENT_MODE) {}
+KVClient::KVClient(const std::string& protocol, KvStore &kv, uint16_t provider_id)
+        :myEngine(protocol, THALLIUM_CLIENT_MODE),kv(kv),provider_id(provider_id) {}
 
-void KVClient::fetch(int key, std::string& server_endpoint, std::unordered_map<int, double>& mp) {
-    if (mp.find(key) != mp.end()) {
-        std::cout << "Key " << key << " found locally: " << mp[key] << std::endl;
-        return;
-    }
+std::string KVClient::fetch(int key, std::string& server_endpoint) {
+        try {
+                std::string value="";
+                if(key%2 == 1) {
+                        std::chrono::time_point<std::chrono::system_clock> start, end;
+                        start = std::chrono::system_clock::now();
+                        value = kv.Find(key);
+                        end = std::chrono::system_clock::now();
+                        std::chrono::duration<double> elapsed_seconds = end - start;
+                        std::cout << "Key Found locally.\n";
+                        std::cout << key << "->" << value << '\n';
+                        std::cout << "elapsed time: " << elapsed_seconds.count();
+                }
+                else {
+                        std::cout << "Key not found locally. Fetching from server.\n";
+                        tl::remote_procedure remote_kv_fetch = myEngine.define("kv_fetch");
+                        tl::endpoint server_ep = myEngine.lookup(server_endpoint);
+                        tl::provider_handle ph(server_ep, provider_id);
+                        std::chrono::time_point<std::chrono::system_clock> start, end;
+                        start = std::chrono::system_clock::now();
+                        value = remote_kv_fetch.on(ph)(key).as<std::string>();
+                        end = std::chrono::system_clock::now();
+                        std::chrono::duration<double> elapsed_seconds = end - start;
+                        std::cout << "Key Found on the Server.\n";
+                        std::cout << key << "->" << value << '\n';
+                        std::cout << "elapsed time: " << elapsed_seconds.count();
+                }
+                return value;
+        } catch (const std::exception &e){
+                std::cerr << "Insert operation failed: " << e.what() << std::endl;
+                return e.what();
+        }
 
-    std::cout << "Key not found locally. Proceeding to server lookup." << std::endl;
-    tl::remote_procedure remote_kv_fetch = myEngine.define("kv_fetch");
-    tl::endpoint server_ep = myEngine.lookup(server_endpoint);
-
-    std::pair<int, double> p;
-    std::vector<std::pair<void*, std::size_t>> segments = {
-        {&p, sizeof(p)}
-    };
-    tl::bulk local_bulk = myEngine.expose(segments, tl::bulk_mode::write_only);
-
-    remote_kv_fetch.on(server_ep)(local_bulk, key);
-
-    std::cout << "Received from server: " << p.first << " -> " << p.second << std::endl;
 }
 
-void KVClient::insert(int key, double value, const std::string& server_endpoint) {
-    tl::remote_procedure remote_kv_insert = myEngine.define("kv_insert");
-    tl::endpoint server_ep = myEngine.lookup(server_endpoint);
-
-    try {
-        remote_kv_insert.on(server_ep)(key, value);
-        std::cout << "Inserted successfully: " << key << " -> " << value << std::endl;
-    } catch (const std::exception& e) {
-        std::cerr << "Insert operation failed: " << e.what() << std::endl;
-    }
+void KVClient::insert(int key, const std::string value, const std::string& server_endpoint) {
+        try {
+                if(key%2 == 1) {
+                        std::chrono::time_point<std::chrono::system_clock> start, end;
+                        start = std::chrono::system_clock::now();
+                        kv.Insert(key, value);
+                        end = std::chrono::system_clock::now();
+                        std::chrono::duration<double> elapsed_seconds = end - start;
+                        std::cout << "Key Inserted Locally Successfully.\n";
+                        std::cout << key << "->" << value << '\n';
+                        std::cout << "elapsed time: " << elapsed_seconds.count();
+                }
+                else {
+                        tl::remote_procedure remote_kv_insert = myEngine.define("kv_insert");
+                        tl::endpoint server_ep = myEngine.lookup(server_endpoint);
+                        tl::provider_handle ph(server_ep, provider_id);
+                        std::chrono::time_point<std::chrono::system_clock> start, end;
+                        start = std::chrono::system_clock::now();
+                        remote_kv_insert.on(ph)(key, value);
+                        end = std::chrono::system_clock::now();
+                        std::chrono::duration<double> elapsed_seconds = end - start;
+                        std::cout << "Inserted on the server successfully: " << key << " -> " << value << std::endl;
+                        std::cout << "elapsed time: " << elapsed_seconds.count();
+                }
+        } catch (const std::exception& e) {
+                std::cerr << "Insert operation failed: " << e.what() << std::endl;
+        }
 }
 
-void KVClient::update(int key, double value, const std::string& server_endpoint) {
-    tl::remote_procedure remote_kv_update = myEngine.define("kv_update");
-    tl::endpoint server_ep = myEngine.lookup(server_endpoint);
+void KVClient::update(int key, const std::string value, const std::string& server_endpoint) {
+        try {
+                if(key%2==1) {
+                        std::chrono::time_point<std::chrono::system_clock> start, end;
+                        start = std::chrono::system_clock::now();
+                        kv.Update(key, value);
+                        end = std::chrono::system_clock::now();
+                        std::chrono::duration<double> elapsed_seconds = end - start;
+                        std::cout << "Key Updated Locally Successfully.\n";
+                        std::cout << key << "->" << value << '\n';
+                        std::cout << "elapsed time: " << elapsed_seconds.count();
+                }
+                else {
+                        tl::remote_procedure remote_kv_update = myEngine.define("kv_update");
+                        tl::endpoint server_ep = myEngine.lookup(server_endpoint);
+                        tl::provider_handle ph(server_ep, provider_id);
+                        std::chrono::time_point<std::chrono::system_clock> start, end;
+                        start = std::chrono::system_clock::now();
+                        remote_kv_update.on(ph)(key, value);
+                        end = std::chrono::system_clock::now();
+                        std::chrono::duration<double> elapsed_seconds = end - start;
+                        std::cout << "Updated successfully: " << key << " -> " << value << std::endl;
+                        std::cout << "elapsed time: " << elapsed_seconds.count();
+                }
+        } catch (const std::exception& e) {
+                std::cerr << "Update operation failed: " << e.what() << std::endl;
+        }
+}
 
-    try {
-        remote_kv_update.on(server_ep)(key, value);
-        std::cout << "Updated successfully: " << key << " -> " << value << std::endl;
-    } catch (const std::exception& e) {
-        std::cerr << "Update operation failed: " << e.what() << std::endl;
-    }
+void KVClient::delete_(int key, const std::string& server_endpoint) {
+        try {
+                if(key%2==1) {
+                        std::chrono::time_point<std::chrono::system_clock> start, end;
+                        start = std::chrono::system_clock::now();
+                        kv.Delete(key);
+                        end = std::chrono::system_clock::now();
+                        std::chrono::duration<double> elapsed_seconds = end - start;
+                        std::cout << "Key Deleted Locally Successfully.\n";
+                        std::cout << key << '\n';
+                        std::cout << "elapsed time: " << elapsed_seconds.count();
+                }
+                else {
+                        tl::remote_procedure remote_kv_delete = myEngine.define("kv_delete");
+                        tl::endpoint server_ep = myEngine.lookup(server_endpoint);
+                        tl::provider_handle ph(server_ep, provider_id);
+                        std::chrono::time_point<std::chrono::system_clock> start, end;
+                        start = std::chrono::system_clock::now();
+                        remote_kv_delete.on(ph)(key);
+                        end = std::chrono::system_clock::now();
+                        std::chrono::duration<double> elapsed_seconds = end - start;
+                        std::cout << "Deleted successfully: " << key << std::endl;
+                        std::cout << "elapsed time: " << elapsed_seconds.count();
+                }
+        } catch (const std::exception& e) {
+                std::cerr << "Delete operation failed: " << e.what() << std::endl;
+        }
 }
