@@ -1,0 +1,7 @@
+{
+	"InstallScripts" : 
+	[
+		"/home/ccbd/kv_store_integrated/build/cmake_install.cmake"
+	],
+	"Parallel" : false
+}
