@@ -34,7 +34,7 @@ echo "Memory configuration: $SHARED_MEM_SIZE per node"
 
 # Start the KV server on the current machine
 echo "Starting KV server on $HOSTNAME ($HOST_IP)"
-echo "This node will handle $(if [[ "$HOST_IP" == "10.10.3.49" ]]; then echo "ODD"; else echo "EVEN"; fi) keys"
+# echo "This node will handle $(if [[ "$HOST_IP" == "10.10.3.49" ]]; then echo "ODD"; else echo "EVEN"; fi) keys"
 
 # Launch the server with the specified memory size
 $BUILD_DIR/kvm_server ofi+tcp 8080 $SHARED_MEM_SIZE &
