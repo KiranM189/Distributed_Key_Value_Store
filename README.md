@@ -40,53 +40,53 @@ Ensure the following dependencies are installed:
 
 ## Install Dependencies with Spack
 
-# Clone Spack
+### Clone Spack
 git clone https://github.com/spack/spack.git
 export PATH=$PATH:$(pwd)/spack/bin
 
-# Install required libraries
+### Install required libraries
 spack install margo
 spack install argobots
 spack install mercury
 spack install thallium
 spack install boost
 
-# Load the Spack environment
+### Load the Spack environment
 spack load margo argobots mercury thallium boost
 
-# Clone the repository and switch to the integration branch
+## Clone the repository and switch to the integration branch
 
-# Create and navigate to the build directory
+### Create and navigate to the build directory
 mkdir build
 cd build
 
-# Configure with CMake
+### Configure with CMake
 cmake ..
 
-# Build the project
+### Build the project
 make
 
 
-# Starting the server
-# Default memory allocation
+## Starting the server
+### Default memory allocation
 ./start_nodes.sh
 
-# Custom memory allocation
+### Custom memory allocation
 ./start_nodes.sh -m 1G
 
-# Custom build directory and memory allocation
+### Custom build directory and memory allocation
 ./start_nodes.sh -d /path/to/build -m 500M
 
 The above commands can be run on multiple machines to start the server across the cluster.
 
-# Starting the client
-# Default (will prompt to add nodes)
+## Starting the client
+### Default (will prompt to add nodes)
 ./kvm_client_integrated
 
-# With predefined nodes
+### With predefined nodes
 ./kvm_client_integrated --node ofi+tcp://192.168.1.100:8080 --node ofi+tcp://192.168.1.101:8080
 
 
-# Stopping the server
+## Stopping the server
 kill <SERVER_PID>
 
