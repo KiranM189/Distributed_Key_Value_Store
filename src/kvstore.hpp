@@ -4,6 +4,7 @@
 
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/containers/map.hpp>
+#include <boost/unordered_map.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/sync/named_mutex.hpp>
 #include <boost/container/string.hpp>
@@ -17,7 +18,7 @@ typedef boost::container::basic_string<char, std::char_traits<char>, CharAllocat
 typedef allocator<MyShmString, managed_shared_memory::segment_manager> StringAllocator;
 typedef std::pair<const int, MyShmString> newtype;
 typedef allocator<newtype, managed_shared_memory::segment_manager> newallocator;
-typedef boost::interprocess::map<int, MyShmString, std::less<int>, newallocator> newmap;
+typedef boost::unordered_map<int, MyShmString, boost::hash<int>, std::equal_to<int>, newallocator> newmap;
 
 extern const char* MUTEX_NAME;
 
@@ -44,4 +45,3 @@ private:
 };
 
 #endif
-

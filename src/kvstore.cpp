@@ -5,21 +5,18 @@ const char* MUTEX_NAME = "SharedMapMutex";
 
 
 KvStore& KvStore::get_instance(int size) {
-    std::cout << "[get_instance] Before creating static instance\n";
     static KvStore instance(size);
-    std::cout << "[get_instance] Returning instance\n";
     return instance;
 }
 
 KvStore::KvStore(int size) {
-    std::cout << "[KvStore] Constructor started\n";
     try {
         shared_mem = new managed_shared_memory(create_only, "Project", size);
         std::cout << "[KvStore] Shared memory created\n";
 
         newallocator allocate(shared_mem->get_segment_manager());
-        map_ptr = shared_mem->construct<newmap>("SharedMap")(std::less<int>(), allocate);
-        std::cout << "[KvStore] Map constructed\n";
+        map_ptr = shared_mem->construct<newmap>("SharedMap")(0, boost::hash<int>(), std::equal_to<int>(), allocate);
+        std::cout << "[KvStore] Unordered map constructed\n";
 
         if (!named_mutex::remove(MUTEX_NAME))
             std::cout << "[KvStore] Warning: failed to remove existing mutex\n";
@@ -36,10 +33,6 @@ KvStore::KvStore(int size) {
 
     std::cout << "[KvStore] Constructor finished\n";
 }
-
-
-
-
 
 void KvStore::Insert(int key, const std::string& value) {
     try {
@@ -77,7 +70,6 @@ void KvStore::Insert(int key, const std::string& value) {
         std::cout << "Unexpected error in Insert function: " << e.what() << std::endl;
     }
 }
-
 
 void KvStore::Update(int key, const std::string& new_value) {
     try {
@@ -141,26 +133,21 @@ std::string KvStore::Find(int key) {
         if (it != map_ptr->end()) {
             std::string normal_str = std::string(it->second.c_str());
             return normal_str;
-
-
-            std::cout << "Found key " << key << " with value: " << it->second << std::endl;
         } else {
             return "key not found";
         }
         
     } catch (std::exception &e) {
         std::cout << "Error: " << e.what() << std::endl;
+        return "Error occurred";
     }
 }
 
 KvStore::~KvStore() {
     try {
-
         managed_shared_memory segment(open_only, "Project");
-
         segment.destroy<newmap>("SharedMap");
-
-        std::cout << "Destroyed map from shared memory." << std::endl;
+        std::cout << "Destroyed unordered map from shared memory." << std::endl;
     } catch (...) {
         std::cout << "Map destruction failed or already done.\n";
     }
