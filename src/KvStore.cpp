@@ -25,10 +25,10 @@ KvStore::KvStore(std::size_t size) : total_memory_size(size) {
         shared_mem = new managed_shared_memory(create_only, "Project", size);
         std::cout << "[KvStore] Shared memory created successfully\n";
         
-        // Construct the map in shared memory
+        // Construct the unordered map in shared memory
         newallocator allocate(shared_mem->get_segment_manager());
-        map_ptr = shared_mem->construct<newmap>("SharedMap")(std::less<int>(), allocate);
-        std::cout << "[KvStore] Map constructed successfully\n";
+        map_ptr = shared_mem->construct<newmap>("SharedMap")(0, boost::hash<int>(), std::equal_to<int>(), allocate);
+        std::cout << "[KvStore] Unordered map constructed successfully\n";
         
         // Handle mutex
         if (!named_mutex::remove(MUTEX_NAME))
@@ -59,7 +59,7 @@ KvStore::KvStore(std::size_t size) : total_memory_size(size) {
             // Try again with fresh memory
             shared_mem = new managed_shared_memory(create_only, "Project", size);
             newallocator allocate(shared_mem->get_segment_manager());
-            map_ptr = shared_mem->construct<newmap>("SharedMap")(std::less<int>(), allocate);
+            map_ptr = shared_mem->construct<newmap>("SharedMap")(0, boost::hash<int>(), std::equal_to<int>(), allocate);
             named_mutex mutex(open_or_create, MUTEX_NAME);
             
             std::cout << "[KvStore] Recovery successful\n";
@@ -300,16 +300,16 @@ KvStore::~KvStore() {
         
         if (shared_mem) {
             try {
-                // Destroy map object in shared memory
+                // Destroy unordered map object in shared memory
                 shared_mem->destroy<newmap>("SharedMap");
-                std::cout << "Destroyed map from shared memory." << std::endl;
+                std::cout << "Destroyed unordered map from shared memory." << std::endl;
                 
                 // Delete the shared_mem pointer
                 delete shared_mem;
                 shared_mem = nullptr;
                 
             } catch (const std::exception& e) {
-                std::cout << "Error during map destruction: " << e.what() << std::endl;
+                std::cout << "Error during unordered map destruction: " << e.what() << std::endl;
             }
         }
         
