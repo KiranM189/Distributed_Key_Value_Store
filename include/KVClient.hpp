@@ -13,8 +13,15 @@ class KVClient {
 private:
     tl::engine myEngine;
     uint16_t provider_id;
+    std::size_t shared_memory_size;
+    
+    // Private helper methods
+    std::string getLocalAddress();
+    bool isKeyLocal(int key, std::string& local_address);
+    std::string fetchFromLocal(int key);
+    
 public:
-    KVClient(const std::string& protocol, uint16_t provider_id);
+    KVClient(const std::string& protocol, uint16_t provider_id, std::size_t mem_size = 100 * 1024 * 1024);
     std::string fetch(int key, std::string& server_endpoint);
     void insert(int key, const std::string value, const std::string& server_endpoint);
     void update(int key, const std::string value, const std::string& server_endpoint);

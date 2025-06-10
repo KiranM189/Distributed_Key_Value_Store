@@ -1,6 +1,8 @@
 file(REMOVE_RECURSE
   "CMakeFiles/kvm_client_integrated.dir/src/KVClient.cpp.o"
   "CMakeFiles/kvm_client_integrated.dir/src/KVClient.cpp.o.d"
+  "CMakeFiles/kvm_client_integrated.dir/src/KvStore.cpp.o"
+  "CMakeFiles/kvm_client_integrated.dir/src/KvStore.cpp.o.d"
   "CMakeFiles/kvm_client_integrated.dir/src/main_integrated_client.cpp.o"
   "CMakeFiles/kvm_client_integrated.dir/src/main_integrated_client.cpp.o.d"
   "kvm_client_integrated"

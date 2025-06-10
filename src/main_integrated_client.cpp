@@ -10,6 +10,7 @@
 #include <iomanip>
 #include <thread>
 #include <numeric>
+
 // Helper function to parse command arguments
 std::vector<std::string> parseCommand(const std::string& command) {
     std::vector<std::string> args;
@@ -20,6 +21,7 @@ std::vector<std::string> parseCommand(const std::string& command) {
     }
     return args;
 }
+
 // Help function
 void printHelp() {
     std::cout << "\nDistributed Key-Value Store Commands:" << std::endl;
@@ -38,6 +40,7 @@ void printHelp() {
     std::cout << "  help                     - Show this help message" << std::endl;
     std::cout << "  exit                     - Exit the program" << std::endl;
 }
+
 void runBenchmark(ThalliumDistributor& distributor) {
     const int NUM_KEYS = 2000000;
     const int VALUE_LENGTH = 50;
@@ -52,6 +55,7 @@ void runBenchmark(ThalliumDistributor& distributor) {
     std::cout << "Keys to test: " << NUM_KEYS << std::endl;
     std::cout << "Value length: ~" << VALUE_LENGTH << " characters" << std::endl;
     std::cout << std::endl;
+
     // Generate random test data
     std::vector<std::pair<int, std::string>> test_data;
     std::random_device rd;
@@ -59,14 +63,14 @@ void runBenchmark(ThalliumDistributor& distributor) {
     std::uniform_int_distribution<> char_dis(97, 122); // a-z
     std::cout << "Generating test data..." << std::endl;
     for (int i = 1; i <= NUM_KEYS; i++) {
-        std::string value = "test_value_" + std::to_string(i) + "_";
+        std::string value = "testvalue" + std::to_string(i) + "";
         // Add random characters to reach desired length
         while (value.length() < VALUE_LENGTH) {
             value += static_cast<char>(char_dis(gen));
         }
-
         test_data.push_back({i, value});
     }
+
     // Phase 1: Insert all key-value pairs
     std::cout << "\nPHASE 1: Inserting key-value pairs" << std::endl;
     std::cout << std::string(40, '-') << std::endl;
@@ -91,19 +95,21 @@ void runBenchmark(ThalliumDistributor& distributor) {
             std::cout << "Progress: " << pair.first << "/" << NUM_KEYS << " insertions completed" << std::endl;
         }
     }
-
     std::cout << "\nInsertion complete: " << successful_inserts << "/" << NUM_KEYS << " successful" << std::endl;
     if (!insert_times.empty()) {
         double avg_insert = std::accumulate(insert_times.begin(), insert_times.end(), 0.0) / insert_times.size();
         std::cout << "Average insertion time: " << std::fixed << std::setprecision(2) << avg_insert << "ms" << std::endl;
     }
+
     // Small delay to ensure all insertions are complete
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
     // Phase 2: Fetch all keys and categorize by local/remote
     std::cout << "\nPHASE 2: Fetching key-value pairs and measuring times" << std::endl;
     std::cout << std::string(50, '-') << std::endl;
     std::vector<double> local_fetch_times;
     std::vector<double> remote_fetch_times;
+
     // Get current node info for determining local vs remote
     // For simplicity, we'll consider the first node as "local" and others as "remote"
     for (int key = 1; key <= NUM_KEYS; key++) {
@@ -117,6 +123,7 @@ void runBenchmark(ThalliumDistributor& distributor) {
             auto end = std::chrono::high_resolution_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
             double time_ms = duration.count() / 1000.0;
+
             if (value != "Key not found in mappings" &&
                 value != "RPC fetch failed" &&
                 value != "Connection failed") {
@@ -138,6 +145,7 @@ void runBenchmark(ThalliumDistributor& distributor) {
             std::cout << "Progress: " << key << "/" << NUM_KEYS << " fetches completed" << std::endl;
         }
     }
+
     // Phase 3: Calculate and display statistics
     std::cout << "\nPHASE 3: Performance Analysis" << std::endl;
     std::cout << std::string(30, '-') << std::endl;
@@ -145,10 +153,16 @@ void runBenchmark(ThalliumDistributor& distributor) {
         double avg_local = std::accumulate(local_fetch_times.begin(), local_fetch_times.end(), 0.0) / local_fetch_times.size();
         double min_local = *std::min_element(local_fetch_times.begin(), local_fetch_times.end());
         double max_local = *std::max_element(local_fetch_times.begin(), local_fetch_times.end());
+        std::cout << "LOCAL FETCH STATISTICS:" << std::endl;
+        std::cout << "  Count: " << local_fetch_times.size() << std::endl;
+        std::cout << "  Average: " << std::fixed << std::setprecision(2) << avg_local << "ms" << std::endl;
+        std::cout << "  Min: " << std::fixed << std::setprecision(2) << min_local << "ms" << std::endl;
+        std::cout << "  Max: " << std::fixed << std::setprecision(2) << max_local << "ms" << std::endl;
     } else {
         std::cout << "No local fetch data available" << std::endl;
     }
     std::cout << std::endl;
+
     if (!remote_fetch_times.empty()) {
         double avg_remote = std::accumulate(remote_fetch_times.begin(), remote_fetch_times.end(), 0.0) / remote_fetch_times.size();
         double min_remote = *std::min_element(remote_fetch_times.begin(), remote_fetch_times.end());
@@ -162,6 +176,7 @@ void runBenchmark(ThalliumDistributor& distributor) {
         std::cout << "No remote fetch data available" << std::endl;
     }
     std::cout << std::endl;
+
     // Phase 4: Performance comparison
     if (!local_fetch_times.empty() && !remote_fetch_times.empty()) {
         std::cout << "PERFORMANCE COMPARISON:" << std::endl;
@@ -169,7 +184,6 @@ void runBenchmark(ThalliumDistributor& distributor) {
         double avg_local = std::accumulate(local_fetch_times.begin(), local_fetch_times.end(), 0.0) / local_fetch_times.size();
         double avg_remote = std::accumulate(remote_fetch_times.begin(), remote_fetch_times.end(), 0.0) / remote_fetch_times.size();
         double performance_ratio = avg_remote / avg_local;
-
         std::cout << "Local average:   " << std::fixed << std::setprecision(2) << avg_local << "ms" << std::endl;
         std::cout << "Remote average:  " << std::fixed << std::setprecision(2) << avg_remote << "ms" << std::endl;
         std::cout << "Performance ratio: " << std::fixed << std::setprecision(2) << performance_ratio << "x" << std::endl;
@@ -187,48 +201,41 @@ void runBenchmark(ThalliumDistributor& distributor) {
     std::cout << std::string(60, '=') << std::endl;
 }
 
-
-// Add this function after the existing runBenchmark function (around line 150)
-
 void runBenchmark1(ThalliumDistributor& distributor) {
     const int NUM_KEYS = 2000000;
     const int VALUE_LENGTH = 50;
     std::cout << "\n" << std::string(60, '=') << std::endl;
     std::cout << "DISTRIBUTED KEY-VALUE STORE BENCHMARK1 (RANDOM FETCH)" << std::endl;
     std::cout << std::string(60, '=') << std::endl;
-    
     if (distributor.getNodeCount() == 0) {
         std::cout << "Error: No nodes available. Add nodes first." << std::endl;
         return;
     }
-    
     std::cout << "Nodes in cluster: " << distributor.getNodeCount() << std::endl;
     std::cout << "Keys to test: " << NUM_KEYS << std::endl;
     std::cout << "Value length: ~" << VALUE_LENGTH << " characters" << std::endl;
     std::cout << std::endl;
-    
+
     // Generate random test data
     std::vector<std::pair<int, std::string>> test_data;
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> char_dis(97, 122); // a-z
-    
     std::cout << "Generating test data..." << std::endl;
     for (int i = 1; i <= NUM_KEYS; i++) {
-        std::string value = "test_value_" + std::to_string(i) + "_";
+        std::string value = "testvalue" + std::to_string(i) + "";
         // Add random characters to reach desired length
         while (value.length() < VALUE_LENGTH) {
             value += static_cast<char>(char_dis(gen));
         }
         test_data.push_back({i, value});
     }
-    
+
     // Phase 1: Insert all key-value pairs (same as original benchmark)
     std::cout << "\nPHASE 1: Inserting key-value pairs" << std::endl;
     std::cout << std::string(40, '-') << std::endl;
     std::vector<double> insert_times;
     int successful_inserts = 0;
-    
     for (const auto& pair : test_data) {
         auto start = std::chrono::high_resolution_clock::now();
         std::cout << "Inserting key " << pair.first << "... " << std::flush;
@@ -243,40 +250,35 @@ void runBenchmark1(ThalliumDistributor& distributor) {
         } catch (const std::exception& e) {
             std::cout << "FAILED (" << e.what() << ")" << std::endl;
         }
-        
         // Progress indicator
         if (pair.first % 100 == 0) {
             std::cout << "Progress: " << pair.first << "/" << NUM_KEYS << " insertions completed" << std::endl;
         }
     }
-    
     std::cout << "\nInsertion complete: " << successful_inserts << "/" << NUM_KEYS << " successful" << std::endl;
     if (!insert_times.empty()) {
         double avg_insert = std::accumulate(insert_times.begin(), insert_times.end(), 0.0) / insert_times.size();
         std::cout << "Average insertion time: " << std::fixed << std::setprecision(2) << avg_insert << "ms" << std::endl;
     }
-    
     // Small delay to ensure all insertions are complete
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-    
+
     // Phase 2: Create randomized key sequence and fetch
     std::cout << "\nPHASE 2: Fetching key-value pairs RANDOMLY and measuring times" << std::endl;
     std::cout << std::string(60, '-') << std::endl;
-    
     // Create vector of keys and shuffle them randomly
     std::vector<int> keys_to_fetch;
     for (int i = 1; i <= NUM_KEYS; i++) {
         keys_to_fetch.push_back(i);
     }
-    
     // Shuffle the keys randomly
     std::shuffle(keys_to_fetch.begin(), keys_to_fetch.end(), gen);
     std::cout << "Keys shuffled randomly for fetching..." << std::endl;
-    
+
     std::vector<double> local_fetch_times;
     std::vector<double> remote_fetch_times;
     int fetch_count = 0;
-    
+
     // Fetch keys in random order
     for (int key : keys_to_fetch) {
         fetch_count++;
@@ -286,12 +288,11 @@ void runBenchmark1(ThalliumDistributor& distributor) {
             // Determine which node this key maps to
             int node_idx = key % distributor.getNodeCount();
             bool is_local = (node_idx == 0); // Consider node 0 as local
-            
             std::string value = distributor.get(key);
             auto end = std::chrono::high_resolution_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
             double time_ms = duration.count() / 1000.0;
-            
+
             if (value != "Key not found in mappings" &&
                 value != "RPC fetch failed" &&
                 value != "Connection failed") {
@@ -308,22 +309,19 @@ void runBenchmark1(ThalliumDistributor& distributor) {
         } catch (const std::exception& e) {
             std::cout << "FAILED (" << e.what() << ")" << std::endl;
         }
-        
         // Progress indicator
         if (fetch_count % 100 == 0) {
             std::cout << "Progress: " << fetch_count << "/" << NUM_KEYS << " random fetches completed" << std::endl;
         }
     }
-    
+
     // Phase 3: Calculate and display statistics (same as original)
     std::cout << "\nPHASE 3: Performance Analysis (Random Fetch Pattern)" << std::endl;
     std::cout << std::string(45, '-') << std::endl;
-    
     if (!local_fetch_times.empty()) {
         double avg_local = std::accumulate(local_fetch_times.begin(), local_fetch_times.end(), 0.0) / local_fetch_times.size();
         double min_local = *std::min_element(local_fetch_times.begin(), local_fetch_times.end());
         double max_local = *std::max_element(local_fetch_times.begin(), local_fetch_times.end());
-        
         std::cout << "LOCAL FETCH STATISTICS:" << std::endl;
         std::cout << "  Count: " << local_fetch_times.size() << std::endl;
         std::cout << "  Average: " << std::fixed << std::setprecision(2) << avg_local << "ms" << std::endl;
@@ -333,12 +331,10 @@ void runBenchmark1(ThalliumDistributor& distributor) {
         std::cout << "No local fetch data available" << std::endl;
     }
     std::cout << std::endl;
-    
     if (!remote_fetch_times.empty()) {
         double avg_remote = std::accumulate(remote_fetch_times.begin(), remote_fetch_times.end(), 0.0) / remote_fetch_times.size();
         double min_remote = *std::min_element(remote_fetch_times.begin(), remote_fetch_times.end());
         double max_remote = *std::max_element(remote_fetch_times.begin(), remote_fetch_times.end());
-        
         std::cout << "REMOTE FETCH STATISTICS:" << std::endl;
         std::cout << "  Count: " << remote_fetch_times.size() << std::endl;
         std::cout << "  Average: " << std::fixed << std::setprecision(2) << avg_remote << "ms" << std::endl;
@@ -348,7 +344,7 @@ void runBenchmark1(ThalliumDistributor& distributor) {
         std::cout << "No remote fetch data available" << std::endl;
     }
     std::cout << std::endl;
-    
+
     // Phase 4: Performance comparison
     if (!local_fetch_times.empty() && !remote_fetch_times.empty()) {
         std::cout << "PERFORMANCE COMPARISON (RANDOM FETCH):" << std::endl;
@@ -356,11 +352,9 @@ void runBenchmark1(ThalliumDistributor& distributor) {
         double avg_local = std::accumulate(local_fetch_times.begin(), local_fetch_times.end(), 0.0) / local_fetch_times.size();
         double avg_remote = std::accumulate(remote_fetch_times.begin(), remote_fetch_times.end(), 0.0) / remote_fetch_times.size();
         double performance_ratio = avg_remote / avg_local;
-
         std::cout << "Local average:   " << std::fixed << std::setprecision(2) << avg_local << "ms" << std::endl;
         std::cout << "Remote average:  " << std::fixed << std::setprecision(2) << avg_remote << "ms" << std::endl;
         std::cout << "Performance ratio: " << std::fixed << std::setprecision(2) << performance_ratio << "x" << std::endl;
-        
         if (avg_local < avg_remote) {
             double improvement = ((avg_remote - avg_local) / avg_remote) * 100;
             std::cout << "Local is " << std::fixed << std::setprecision(1) << improvement << "% faster than remote" << std::endl;
@@ -369,14 +363,11 @@ void runBenchmark1(ThalliumDistributor& distributor) {
             std::cout << "Remote is " << std::fixed << std::setprecision(1) << degradation << "% faster than local" << std::endl;
         }
     }
-    
     std::cout << std::endl;
     std::cout << std::string(60, '=') << std::endl;
     std::cout << "BENCHMARK1 (RANDOM FETCH) COMPLETE" << std::endl;
     std::cout << std::string(60, '=') << std::endl;
 }
-
-
 
 int main(int argc, char** argv) {
     uint16_t provider_id = 1;
@@ -385,9 +376,11 @@ int main(int argc, char** argv) {
     std::cout << "\nModulo-based Key-Value Store" << std::endl;
     std::cout << "===========================" << std::endl;
     std::cout << "Hashing mechanism: key % number_of_nodes" << std::endl;
+
     // Handle initial nodes from command line or default setup
     std::vector<std::string> initial_nodes;
     bool setup_from_args = false;
+
     // Check if nodes are provided via command line arguments
     for (int i = 1; i < argc; i++) {
         std::string arg = argv[i];
@@ -399,6 +392,7 @@ int main(int argc, char** argv) {
             }
         }
     }
+
     // If no nodes specified on command line, use defaults
     if (!setup_from_args) {
         std::cout << "No nodes specified via command line. Add nodes using 'addnode' command." << std::endl;
@@ -409,14 +403,18 @@ int main(int argc, char** argv) {
         }
         std::cout << "Added " << initial_nodes.size() << " nodes to the cluster." << std::endl;
     }
+
     printHelp();
+
     while (true) {
         std::string input;
         std::cout << "\n> ";
         std::getline(std::cin, input);
         if (input.empty()) continue;
+
         std::vector<std::string> args = parseCommand(input);
         std::string action = args[0];
+
         if (action == "exit") {
             break;
         } else if (action == "help") {
@@ -504,10 +502,9 @@ int main(int argc, char** argv) {
         }
 
         else if (action == "benchmark1"){
-		 std::cout << "Starting integrated benchmark1 (random fetch)..." << std::endl;
-		 runBenchmark1(distributor);
-	}
-
+                 std::cout << "Starting integrated benchmark1 (random fetch)..." << std::endl;
+                 runBenchmark1(distributor);
+        }
          else {
             std::cout << "Unknown or incomplete command: " << action << std::endl;
             std::cout << "Type 'help' for available commands." << std::endl;
