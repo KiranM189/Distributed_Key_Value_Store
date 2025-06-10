@@ -19,6 +19,9 @@ private:
     std::string getLocalAddress();
     bool isKeyLocal(int key, std::string& local_address);
     std::string fetchFromLocal(int key);
+    bool insertToLocal(int key, const std::string& value);
+    bool updateInLocal(int key, const std::string& value);
+    bool deleteFromLocal(int key);
     
 public:
     KVClient(const std::string& protocol, uint16_t provider_id, std::size_t mem_size = 100 * 1024 * 1024);
