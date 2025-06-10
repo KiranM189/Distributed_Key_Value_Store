@@ -13,6 +13,9 @@
 #include <unistd.h>
 #include <cstring>
 #include <chrono>
+#include <ifaddrs.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 namespace tl = thallium;
 
@@ -41,8 +44,84 @@ private:
     std::vector<std::pair<std::string, uint16_t>> nodes; // endpoints and provider_ids
     std::unordered_map<int, int> key_to_node; // Stores known key-node mappings
     uint16_t provider_id;
-    int local_node_id; // ID of the local node (default: 0)
+    int local_node_id; // ID of the local node (will be auto-detected)
     std::unordered_map<int, std::string> local_cache; // Local in-memory cache for local keys
+
+    // Get local IP addresses of the machine
+    std::vector<std::string> getLocalIPAddresses() {
+        std::vector<std::string> local_ips;
+        struct ifaddrs *ifaddr, *ifa;
+        char ip_str[INET_ADDRSTRLEN];
+
+        if (getifaddrs(&ifaddr) == -1) {
+            std::cerr << "Error getting network interfaces" << std::endl;
+            return local_ips;
+        }
+
+        for (ifa = ifaddr; ifa != nullptr; ifa = ifa->ifa_next) {
+            if (ifa->ifa_addr == nullptr) continue;
+
+            // Only consider IPv4 addresses
+            if (ifa->ifa_addr->sa_family == AF_INET) {
+                struct sockaddr_in* addr_in = (struct sockaddr_in*)ifa->ifa_addr;
+                inet_ntop(AF_INET, &(addr_in->sin_addr), ip_str, INET_ADDRSTRLEN);
+                std::string ip(ip_str);
+                
+                // Skip loopback addresses
+                if (ip != "127.0.0.1") {
+                    local_ips.push_back(ip);
+                }
+            }
+        }
+
+        freeifaddrs(ifaddr);
+        return local_ips;
+    }
+
+    // Extract IP from Thallium endpoint (format: "tcp://IP:PORT")
+    std::string extractIPFromEndpoint(const std::string& endpoint) {
+        size_t start = endpoint.find("//");
+        if (start == std::string::npos) return "";
+        
+        start += 2; // Skip "//"
+        size_t end = endpoint.find(":", start);
+        if (end == std::string::npos) return "";
+        
+        return endpoint.substr(start, end - start);
+    }
+
+    // Determine which node is local based on IP addresses
+    void detectLocalNode() {
+        local_node_id = -1; // Initialize as invalid
+        
+        std::vector<std::string> local_ips = getLocalIPAddresses();
+        
+        std::cout << "Local IP addresses detected: ";
+        for (const auto& ip : local_ips) {
+            std::cout << ip << " ";
+        }
+        std::cout << std::endl;
+
+        // Check each node to see if its IP matches any local IP
+        for (size_t i = 0; i < nodes.size(); i++) {
+            std::string node_ip = extractIPFromEndpoint(nodes[i].first);
+            std::cout << "Node " << i << " endpoint: " << nodes[i].first << " -> IP: " << node_ip << std::endl;
+            
+            for (const auto& local_ip : local_ips) {
+                if (node_ip == local_ip) {
+                    local_node_id = static_cast<int>(i);
+                    std::cout << "*** DETECTED LOCAL NODE: Node " << local_node_id 
+                              << " (" << nodes[i].first << ") matches local IP " << local_ip << " ***" << std::endl;
+                    return;
+                }
+            }
+        }
+
+        if (local_node_id == -1) {
+            std::cout << "WARNING: Could not detect local node. No cluster node IP matches this machine's IP addresses." << std::endl;
+            std::cout << "This client will operate in remote-only mode." << std::endl;
+        }
+    }
 
     void loadMappings() {
         std::ifstream file("mappings.txt");
@@ -79,6 +158,9 @@ private:
 
     // Check if a key should be accessed locally
     bool isLocalKey(int key) {
+        if (local_node_id == -1) {
+            return false; // No local node detected
+        }
         if (key_to_node.find(key) == key_to_node.end()) {
             return false;
         }
@@ -161,7 +243,7 @@ private:
     
     bool sendToNode(int node_idx, int key, const std::string &value) {
         // If this is a local key, store locally instead of sending via RPC
-        if (node_idx == local_node_id) {
+        if (node_idx == local_node_id && local_node_id != -1) {
             storeLocal(key, value);
             std::cout << "Data stored locally (no RPC needed)" << std::endl;
             return true;
@@ -290,115 +372,21 @@ private:
 
 public:
     ThalliumDistributor(tl::engine& engine, uint16_t provider_id)
-        : myEngine(engine), provider_id(provider_id), local_node_id(0) { // Default local node is 0
+        : myEngine(engine), provider_id(provider_id), local_node_id(-1) { // Initialize as invalid
         loadMappings();
-        std::cout << "ThalliumDistributor initialized with local node ID: " << local_node_id << std::endl;
+        std::cout << "ThalliumDistributor initialized. Local node will be auto-detected when nodes are added." << std::endl;
     }
 
-    // Set which node is considered "local"
-    void setLocalNodeId(int node_id) {
-        local_node_id = node_id;
-        std::cout << "Local node ID set to: " << local_node_id << std::endl;
-    }
-
-    void put(int key, const std::string &value) {
-        if (nodes.empty()) {
-            std::cerr << "Error: No nodes available to store data.\n";
-            return;
-        }
-
-        if (key_to_node.find(key) != key_to_node.end()) {
-            std::cerr << "Error: Key " << key << " already exists and was assigned to Node "
-                    << key_to_node[key] << "\n";
-            return;
-        }
-
-        int node_idx = getNodeIndex(key);
-        if (sendToNode(node_idx, key, value)) {
-            key_to_node[key] = node_idx;
-            saveMapping(key, node_idx);
-            std::cout << "Stored: " << key << " -> Node " << node_idx
-                    << " (" << nodes[node_idx].first << ")\n";
-        }
-    }
-
-    void update(int key, const std::string &value) {
-        if (key_to_node.find(key) == key_to_node.end()) {
-            std::cerr << "Error: Key " << key << " not found in mappings. Cannot update.\n";
-            return;
-        }
-
-        int node_idx = key_to_node[key];
-        
-        if (node_idx == local_node_id) {
-            // Update locally
-            local_cache[key] = value;
-            std::cout << "Updated locally: " << key << " -> " << value << " on Node " << node_idx << std::endl;
-        } else {
-            // Update remotely via RPC
-            try {
-                tl::remote_procedure remote_kv_update = myEngine.define("kv_update");
-                tl::endpoint server_ep = myEngine.lookup(nodes[node_idx].first);
-                std::cout << "Updating on " << nodes[node_idx].first << std::endl;
-                try {
-                    tl::provider_handle ph(server_ep, nodes[node_idx].second);
-                    remote_kv_update.on(ph)(key, value);
-                    std::cout << "Updated: " << key << " -> " << value << " on Node " << node_idx
-                            << " (" << nodes[node_idx].first << ")\n";
-                } catch (const std::exception& e) {
-                    std::cerr << "Failed to invoke RPC: " << e.what() << std::endl;
-                }
-            } catch (std::exception &e) {
-                std::cerr << "Failed to connect to node " << node_idx << " for update operation." << std::endl;
-            }
-        }
-    }
-
-    void deleteKey(int key) {
-        if (key_to_node.find(key) == key_to_node.end()) {
-            std::cerr << "Error: Key " << key << " not found in mappings. Cannot delete.\n";
-            return;
-        }
-
-        int node_idx = key_to_node[key];
-        
-        if (node_idx == local_node_id) {
-            // Delete locally
-            local_cache.erase(key);
-            key_to_node.erase(key);
-            std::cout << "Deleted locally: Key " << key << " from Node " << node_idx << std::endl;
-            updateMappingsFile();
-        } else {
-            // Delete remotely via RPC
-            try {
-                tl::remote_procedure remote_kv_delete = myEngine.define("kv_delete");
-                tl::endpoint server_ep = myEngine.lookup(nodes[node_idx].first);
-                std::cout << "Deleting from " << nodes[node_idx].first << std::endl;
-                try {
-                    tl::provider_handle ph(server_ep, nodes[node_idx].second);
-                    remote_kv_delete.on(ph)(key);
-                    // Remove the key from our mapping
-                    key_to_node.erase(key);
-                    std::cout << "Deleted: Key " << key << " from Node " << node_idx
-                            << " (" << nodes[node_idx].first << ")\n";
-
-                    // Update the mappings file
-                    updateMappingsFile();
-
-                } catch (const std::exception& e) {
-                    std::cerr << "Failed to invoke RPC: " << e.what() << std::endl;
-                }
-            } catch (std::exception &e) {
-                std::cerr << "Failed to connect to node " << node_idx << " for delete operation." << std::endl;
-            }
-        }
-    }
-    
     // Method to add a new node
     void addNode(const std::string& endpoint, uint16_t node_provider_id) {
         int old_node_count = nodes.size();
         nodes.push_back(std::make_pair(endpoint, node_provider_id));
         std::cout << "Added node " << (nodes.size() - 1) << " at " << endpoint << std::endl;
+
+        // Auto-detect local node after first node is added
+        if (nodes.size() == 1 || local_node_id == -1) {
+            detectLocalNode();
+        }
 
         // Rebalance keys when adding nodes after initial setup
         if (old_node_count > 0) {
@@ -448,8 +436,19 @@ public:
             }
         }
 
+        // Check if we're removing the local node
+        bool removing_local_node = (node_idx == local_node_id);
+
         // Remove the node from our list
         nodes.erase(nodes.begin() + node_idx);
+
+        // Update local_node_id if necessary
+        if (removing_local_node) {
+            local_node_id = -1; // Reset
+            detectLocalNode(); // Re-detect (indexes may have changed)
+        } else if (local_node_id > node_idx) {
+            local_node_id--; // Adjust for removed node
+        }
 
         // Redistribute the keys
         for (const auto& item : keys_to_redistribute) {
@@ -480,6 +479,103 @@ public:
                   << " keys were redistributed." << std::endl;
         return true;
     }
+
+    void put(int key, const std::string &value) {
+        if (nodes.empty()) {
+            std::cerr << "Error: No nodes available to store data.\n";
+            return;
+        }
+
+        if (key_to_node.find(key) != key_to_node.end()) {
+            std::cerr << "Error: Key " << key << " already exists and was assigned to Node "
+                    << key_to_node[key] << "\n";
+            return;
+        }
+
+        int node_idx = getNodeIndex(key);
+        if (sendToNode(node_idx, key, value)) {
+            key_to_node[key] = node_idx;
+            saveMapping(key, node_idx);
+            std::cout << "Stored: " << key << " -> Node " << node_idx
+                    << " (" << nodes[node_idx].first << ")\n";
+        }
+    }
+
+    void update(int key, const std::string &value) {
+    if (key_to_node.find(key) == key_to_node.end()) {
+        std::cerr << "Error: Key " << key << " not found in mappings. Cannot update.\n";
+        return;
+    }
+
+    int node_idx = key_to_node[key];
+
+    // Check if this is a local or remote update
+    if (isLocalKey(key)) {
+        // LOCAL UPDATE - update directly in cache/storage
+        std::cout << "Updating locally on Node " << node_idx << " (LOCAL UPDATE)" << std::endl;
+        local_cache[key] = value;
+        // Also update the local file
+        std::string filename = "local_store_node_" + std::to_string(local_node_id) + ".dat";
+        // Note: In a real implementation, you'd want to update the file properly
+        std::cout << "Updated locally: " << key << " -> " << value << " on Node " << node_idx << std::endl;
+    } else {
+        // REMOTE UPDATE - use RPC
+        std::cout << "Updating remotely on Node " << node_idx << " (REMOTE UPDATE)" << std::endl;
+        try {
+            tl::remote_procedure remote_kv_update = myEngine.define("kv_update");
+            tl::endpoint server_ep = myEngine.lookup(nodes[node_idx].first);
+            try {
+                tl::provider_handle ph(server_ep, nodes[node_idx].second);
+                remote_kv_update.on(ph)(key, value);
+                std::cout << "Updated: " << key << " -> " << value << " on Node " << node_idx
+                        << " (" << nodes[node_idx].first << ")\n";
+            } catch (const std::exception& e) {
+                std::cerr << "Failed to invoke RPC: " << e.what() << std::endl;
+            }
+        } catch (std::exception &e) {
+            std::cerr << "Failed to connect to node " << node_idx << " for update operation." << std::endl;
+        }
+    }
+}
+
+    void deleteKey(int key) {
+    if (key_to_node.find(key) == key_to_node.end()) {
+        std::cerr << "Error: Key " << key << " not found in mappings. Cannot delete.\n";
+        return;
+    }
+
+    int node_idx = key_to_node[key];
+
+    // Check if this is a local or remote delete
+    if (isLocalKey(key)) {
+        // LOCAL DELETE - delete from cache and update mappings
+        std::cout << "Deleting locally from Node " << node_idx << " (LOCAL DELETE)" << std::endl;
+        local_cache.erase(key);
+        key_to_node.erase(key);
+        std::cout << "Deleted locally: Key " << key << " from Node " << node_idx << std::endl;
+        updateMappingsFile();
+    } else {
+        // REMOTE DELETE - use RPC
+        std::cout << "Deleting remotely from Node " << node_idx << " (REMOTE DELETE)" << std::endl;
+        try {
+            tl::remote_procedure remote_kv_delete = myEngine.define("kv_delete");
+            tl::endpoint server_ep = myEngine.lookup(nodes[node_idx].first);
+            try {
+                tl::provider_handle ph(server_ep, nodes[node_idx].second);
+                remote_kv_delete.on(ph)(key);
+                // Remove the key from our mapping
+                key_to_node.erase(key);
+                std::cout << "Deleted: Key " << key << " from Node " << node_idx
+                        << " (" << nodes[node_idx].first << ")\n";
+                updateMappingsFile();
+            } catch (const std::exception& e) {
+                std::cerr << "Failed to invoke RPC: " << e.what() << std::endl;
+            }
+        } catch (std::exception &e) {
+            std::cerr << "Failed to connect to node " << node_idx << " for delete operation." << std::endl;
+        }
+    }
+}
 
     std::string get(int key) {
         if (key_to_node.find(key) == key_to_node.end()) {
@@ -512,12 +608,26 @@ public:
             std::string local_marker = (i == local_node_id) ? " (LOCAL)" : " (REMOTE)";
             std::cout << "Node " << i << ": " << nodes[i].first << local_marker << std::endl;
         }
+        
+        if (local_node_id == -1) {
+            std::cout << "*** WARNING: No local node detected! All operations will be remote. ***" << std::endl;
+        }
     }
 
     // Get the number of nodes
     size_t getNodeCount() const {
         return nodes.size();
     }
+
+
+    std::string getNodeEndpoint(int node_index) const {
+        if (node_index < 0 || node_index >= static_cast<int>(nodes.size())) {
+            std::cerr << "Error: Invalid node index " << node_index << std::endl;
+            return ""; // Return empty string for invalid index
+        }
+        return nodes[node_index].first; // Return the endpoint string (first element of the pair)
+    }
+
 
     // Get the distribution of keys across nodes
     void printKeyDistribution() {
@@ -537,6 +647,22 @@ public:
                       << keys_per_node[i] << " keys" << std::endl;
         }
         std::cout << "Total keys: " << key_to_node.size() << std::endl;
+    }
+
+    // Method to manually trigger local node detection (useful for debugging)
+    void detectAndShowLocalNode() {
+        detectLocalNode();
+        if (local_node_id != -1) {
+            std::cout << "Local node detected: Node " << local_node_id 
+                      << " (" << nodes[local_node_id].first << ")" << std::endl;
+        } else {
+            std::cout << "No local node detected." << std::endl;
+        }
+    }
+
+    // Get local node ID
+    int getLocalNodeId() const {
+        return local_node_id;
     }
 };
 #endif // THALLIUM_DISTRIBUTOR_HPP
