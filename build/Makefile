@@ -212,6 +212,8 @@ src/KvStore.o: src/KvStore.cpp.o
 # target to build an object file
 src/KvStore.cpp.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_server.dir/build.make CMakeFiles/kvm_server.dir/src/KvStore.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_client.dir/build.make CMakeFiles/kvm_client.dir/src/KvStore.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_client_integrated.dir/build.make CMakeFiles/kvm_client_integrated.dir/src/KvStore.cpp.o
 .PHONY : src/KvStore.cpp.o
 
 src/KvStore.i: src/KvStore.cpp.i
@@ -220,6 +222,8 @@ src/KvStore.i: src/KvStore.cpp.i
 # target to preprocess a source file
 src/KvStore.cpp.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_server.dir/build.make CMakeFiles/kvm_server.dir/src/KvStore.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_client.dir/build.make CMakeFiles/kvm_client.dir/src/KvStore.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_client_integrated.dir/build.make CMakeFiles/kvm_client_integrated.dir/src/KvStore.cpp.i
 .PHONY : src/KvStore.cpp.i
 
 src/KvStore.s: src/KvStore.cpp.s
@@ -228,6 +232,8 @@ src/KvStore.s: src/KvStore.cpp.s
 # target to generate assembly for a file
 src/KvStore.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_server.dir/build.make CMakeFiles/kvm_server.dir/src/KvStore.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_client.dir/build.make CMakeFiles/kvm_client.dir/src/KvStore.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_client_integrated.dir/build.make CMakeFiles/kvm_client_integrated.dir/src/KvStore.cpp.s
 .PHONY : src/KvStore.cpp.s
 
 src/main_client.o: src/main_client.cpp.o

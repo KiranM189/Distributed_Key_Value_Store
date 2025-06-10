@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 project(KVServerProject VERSION 1.0 LANGUAGES CXX)
+set(CMAKE_CXX_FLAGS "-lrt")
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 # Find required packages using Spack paths
@@ -33,7 +34,7 @@ target_include_directories(kvm_server PRIVATE
     ${Boost_INCLUDE_DIRS}
 )
 # Add client executable
-add_executable(kvm_client src/KVClient.cpp src/main_client.cpp)
+add_executable(kvm_client src/KVClient.cpp src/KvStore.cpp src/main_client.cpp)
 target_link_libraries(kvm_client
     PkgConfig::MARGO
     PkgConfig::ABT
@@ -51,6 +52,7 @@ target_include_directories(kvm_client PRIVATE
 # Add integrated client executable with distributor
 add_executable(kvm_client_integrated
     src/KVClient.cpp
+    src/KvStore.cpp
     src/main_integrated_client.cpp
 )
 target_link_libraries(kvm_client_integrated

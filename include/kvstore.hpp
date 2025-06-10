@@ -37,22 +37,22 @@ public:
     void Update(int key, const std::string& new_value);
     void Delete(int key);
     std::string Find(int key);
-    
+
     // Memory management functions
     MemoryStats GetMemoryStats() const;
     void PrintMemoryStats(const std::string& operation) const;
     std::size_t GetFreeMemory() const;
     std::size_t GetUsedMemory() const;
-    
+
 private:
     KvStore(std::size_t size);
     managed_shared_memory* shared_mem = nullptr;
     newmap* map_ptr = nullptr;
     std::size_t total_memory_size;
-    
+
     void create();
     bool hasEnoughMemory(std::size_t needed_bytes) const;
-    
+
     KvStore(const KvStore&) = delete;
     KvStore& operator=(const KvStore&) = delete;
     ~KvStore();
