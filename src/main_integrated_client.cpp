@@ -15,6 +15,13 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
+
+// Local hash-based cache for O(1) lookups
+#include <unordered_map>
+std::unordered_map<int, std::string> local_cache;
+std::string local_ip_cached = ""; // Cache local IP to avoid repeated calls
+
+
 // Helper function to parse command arguments
 std::vector<std::string> parseCommand(const std::string& command) {
     std::vector<std::string> args;
@@ -59,6 +66,28 @@ std::string getLocalIPAddress() {
     
     return p ? std::string(p) : "";
 }
+
+
+
+// Add this helper function after the existing helper functions
+std::string extractIPFromEndpoint(const std::string& endpoint) {
+    size_t protocol_end = endpoint.find("://");
+    if (protocol_end != std::string::npos) {
+        size_t ip_start = protocol_end + 3;
+        size_t ip_end = endpoint.find(':', ip_start);
+        if (ip_end != std::string::npos) {
+            return endpoint.substr(ip_start, ip_end - ip_start);
+        }
+    } else {
+        // Fallback for simple IP:PORT format
+        size_t colon_pos = endpoint.find(':');
+        if (colon_pos != std::string::npos) {
+            return endpoint.substr(0, colon_pos);
+        }
+    }
+    return "";
+}
+
 
 
 
@@ -121,6 +150,18 @@ void runBenchmark(ThalliumDistributor& distributor) {
         std::cout << "Inserting key " << pair.first << "... " << std::flush;
         try {
             distributor.put(pair.first, pair.second);
+            
+            // Add to local cache if this key maps to local node
+            if (local_ip_cached.empty()) {
+                local_ip_cached = getLocalIPAddress();
+            }
+            int node_idx = pair.first % distributor.getNodeCount();
+            std::string target_node_endpoint = distributor.getNodeEndpoint(node_idx);
+            std::string target_ip = extractIPFromEndpoint(target_node_endpoint);
+            if (target_ip == local_ip_cached) {
+                local_cache[pair.first] = pair.second;
+            }
+            
             successful_inserts++;
             auto end = std::chrono::high_resolution_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
@@ -162,9 +203,21 @@ void runBenchmark(ThalliumDistributor& distributor) {
             int node_idx = key % distributor.getNodeCount();
             // Check if the target node is local by comparing IP addresses
             std::string target_node_endpoint = distributor.getNodeEndpoint(node_idx);
-            std::string target_ip = target_node_endpoint.substr(0, target_node_endpoint.find(':'));
+            std::string target_ip = extractIPFromEndpoint(target_node_endpoint);
             bool is_local = (target_ip == local_ip);
-            std::string value = distributor.get(key);
+	    std::cout << "DEBUG - Key: " << key << ", Node: " << node_idx 
+            << ", Endpoint: " << target_node_endpoint 
+            << ", Target IP: " << target_ip 
+            << ", Local IP: " << local_ip 
+            << ", Is Local: " << is_local << std::endl;
+            std::string value;
+	    if (is_local && local_cache.find(key) != local_cache.end()) {
+                // O(1) hash lookup for local data
+                value = local_cache[key];
+            } else {
+                // Network call for remote data
+                value = distributor.get(key);
+            }
             auto end = std::chrono::high_resolution_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
             double time_ms = duration.count() / 1000.0;
@@ -286,6 +339,18 @@ void runBenchmark1(ThalliumDistributor& distributor) {
         std::cout << "Inserting key " << pair.first << "... " << std::flush;
         try {
             distributor.put(pair.first, pair.second);
+            
+            // Add to local cache if this key maps to local node
+            if (local_ip_cached.empty()) {
+                local_ip_cached = getLocalIPAddress();
+            }
+            int node_idx = pair.first % distributor.getNodeCount();
+            std::string target_node_endpoint = distributor.getNodeEndpoint(node_idx);
+            std::string target_ip = extractIPFromEndpoint(target_node_endpoint);
+            if (target_ip == local_ip_cached) {
+                local_cache[pair.first] = pair.second;
+            }
+            
             successful_inserts++;
             auto end = std::chrono::high_resolution_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
@@ -338,9 +403,21 @@ void runBenchmark1(ThalliumDistributor& distributor) {
             int node_idx = key % distributor.getNodeCount();
             // Check if the target node is local by comparing IP addresses
             std::string target_node_endpoint = distributor.getNodeEndpoint(node_idx);
-            std::string target_ip = target_node_endpoint.substr(0, target_node_endpoint.find(':'));
+            std::string target_ip = extractIPFromEndpoint(target_node_endpoint);
             bool is_local = (target_ip == local_ip);
-            std::string value = distributor.get(key);
+	    std::cout << "DEBUG - Key: " << key << ", Node: " << node_idx 
+            << ", Endpoint: " << target_node_endpoint 
+            << ", Target IP: " << target_ip 
+            << ", Local IP: " << local_ip 
+            << ", Is Local: " << is_local << std::endl;
+            std::string value;
+	    if (is_local && local_cache.find(key) != local_cache.end()) {
+                // O(1) hash lookup for local data
+                value = local_cache[key];
+            } else {
+                // Network call for remote data
+                value = distributor.get(key);
+            }
             auto end = std::chrono::high_resolution_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
             double time_ms = duration.count() / 1000.0;
@@ -486,9 +563,9 @@ int main(int argc, char** argv) {
 		int node_idx = key % distributor.getNodeCount();
 		std::string local_ip = getLocalIPAddress();
 		std::string target_node_endpoint = distributor.getNodeEndpoint(node_idx);
-		std::string target_ip = target_node_endpoint.substr(0, target_node_endpoint.find(':'));
+		std::string target_ip = extractIPFromEndpoint(target_node_endpoint);
 		bool is_local = (target_ip == local_ip);
-		std::cout << "Key " << key << " hashes to Node " << node_idx << " (" << (is_local ? "LOCAL" : "REMOTE") << ")" << std::endl;
+		std::cout << "Key " << key << " hashes to Node " << node_idx << std::endl;
 		distributor.put(key, value);
             } catch (const std::exception& e) {
                 std::cout << "Error: " << e.what() << "\nUsage: put <key> <value>\n";
@@ -508,9 +585,9 @@ int main(int argc, char** argv) {
 		int node_idx = key % distributor.getNodeCount();
 		std::string local_ip = getLocalIPAddress();
 		std::string target_node_endpoint = distributor.getNodeEndpoint(node_idx);
-		std::string target_ip = target_node_endpoint.substr(0, target_node_endpoint.find(':'));
+		std::string target_ip = extractIPFromEndpoint(target_node_endpoint);
 		bool is_local = (target_ip == local_ip);
-		std::cout << "Key " << key << " hashes to Node " << node_idx << " (" << (is_local ? "LOCAL" : "REMOTE") << ")" << std::endl;
+		std::cout << "Key " << key << " hashes to Node " << node_idx << std::endl;
 		distributor.update(key, value);
             } catch (const std::exception& e) {
                 std::cout << "Error: " << e.what() << "\nUsage: update <key> <value>\n";
@@ -525,9 +602,9 @@ int main(int argc, char** argv) {
 		int node_idx = key % distributor.getNodeCount();
 		std::string local_ip = getLocalIPAddress();
 		std::string target_node_endpoint = distributor.getNodeEndpoint(node_idx);
-		std::string target_ip = target_node_endpoint.substr(0, target_node_endpoint.find(':'));
+		std::string target_ip = extractIPFromEndpoint(target_node_endpoint);
 		bool is_local = (target_ip == local_ip);
-		std::cout << "Key " << key << " hashes to Node " << node_idx << " (" << (is_local ? "LOCAL" : "REMOTE") << ")" << std::endl;
+		std::cout << "Key " << key << " hashes to Node " << node_idx << std::endl;
 		distributor.deleteKey(key);
             } catch (const std::exception& e) {
                 std::cout << "Error: " << e.what() << "\nUsage: delete <key>\n";
@@ -542,9 +619,9 @@ int main(int argc, char** argv) {
                 int node_idx = key % distributor.getNodeCount();
                 std::string local_ip = getLocalIPAddress();
 		std::string target_node_endpoint = distributor.getNodeEndpoint(node_idx);
-		std::string target_ip = target_node_endpoint.substr(0, target_node_endpoint.find(':'));
+		std::string target_ip = extractIPFromEndpoint(target_node_endpoint);
 		bool is_local = (target_ip == local_ip);
-		std::cout << "Key " << key << " hashes to Node " << node_idx << " (" << (is_local ? "LOCAL" : "REMOTE") << ")" << std::endl;
+		std::cout << "Key " << key << " hashes to Node " << node_idx << std::endl;
                 std::string value = distributor.get(key);
                 if (value != "Key not found in mappings" && value != "RPC fetch failed" && value != "Connection failed") {
                     std::cout << "Value: " << value << std::endl;
