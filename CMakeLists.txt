@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 project(KVServerProject VERSION 1.0 LANGUAGES CXX)
 set(CMAKE_CXX_FLAGS "-lrt")
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 # Find required packages using Spack paths
 find_package(PkgConfig REQUIRED)
@@ -25,6 +25,7 @@ target_link_libraries(kvm_server
     PkgConfig::MERCURY
     thallium
     Boost::boost
+    stdc++fs
 )
 target_include_directories(kvm_server PRIVATE
     ${MARGO_INCLUDE_DIRS}
@@ -41,6 +42,7 @@ target_link_libraries(kvm_client
     PkgConfig::MERCURY
     thallium
     Boost::boost
+    stdc++fs
 )
 target_include_directories(kvm_client PRIVATE
     ${MARGO_INCLUDE_DIRS}
@@ -61,6 +63,7 @@ target_link_libraries(kvm_client_integrated
     PkgConfig::MERCURY
     thallium
     Boost::boost
+    stdc++fs
 )
 target_include_directories(kvm_client_integrated PRIVATE
     ${MARGO_INCLUDE_DIRS}

@@ -40,6 +40,79 @@ namespace thallium {
 
 class ThalliumDistributor {
 private:
+    struct ConnectionInfo {
+    tl::endpoint endpoint;
+    tl::provider_handle provider_handle;
+    std::chrono::steady_clock::time_point last_used;
+    bool is_valid;
+    
+    ConnectionInfo() : is_valid(false) {}
+    ConnectionInfo(tl::endpoint ep, tl::provider_handle ph) 
+        : endpoint(std::move(ep)), provider_handle(std::move(ph)), 
+          last_used(std::chrono::steady_clock::now()), is_valid(true) {}
+    };
+
+    std::vector<ConnectionInfo> connection_pool;
+    std::mutex connection_mutex; // For thread safety
+
+    // Pre-establish connections when adding nodes
+    void establishConnection(int node_idx) {
+    try {
+        tl::endpoint server_ep = myEngine.lookup(nodes[node_idx].first);
+        tl::provider_handle ph(server_ep, nodes[node_idx].second);
+        
+        // Expand connection pool if needed
+        if (connection_pool.size() <= node_idx) {
+            connection_pool.resize(node_idx + 1);
+        }
+        
+        connection_pool[node_idx] = ConnectionInfo(std::move(server_ep), std::move(ph));
+        std::cout << "Pre-established connection to node " << node_idx << std::endl;
+        
+    } catch (const std::exception& e) {
+        std::cerr << "Failed to pre-establish connection to node " << node_idx 
+                  << ": " << e.what() << std::endl;
+        if (connection_pool.size() > node_idx) {
+            connection_pool[node_idx].is_valid = false;
+        }
+    }
+}
+
+    // Get or create connection (with fallback)
+ConnectionInfo& getConnection(int node_idx) {
+    std::lock_guard<std::mutex> lock(connection_mutex);
+    
+    // Ensure pool is large enough
+    if (connection_pool.size() <= node_idx) {
+        connection_pool.resize(node_idx + 1);
+    }
+    
+    // Check if existing connection is valid and recent
+    auto& conn = connection_pool[node_idx];
+    auto now = std::chrono::steady_clock::now();
+    auto age = std::chrono::duration_cast<std::chrono::seconds>(now - conn.last_used);
+    
+    if (!conn.is_valid || age.count() > 30) { // Refresh connections older than 30s
+        try {
+            tl::endpoint server_ep = myEngine.lookup(nodes[node_idx].first);
+            tl::provider_handle ph(server_ep, nodes[node_idx].second);
+            conn = ConnectionInfo(std::move(server_ep), std::move(ph));
+        } catch (const std::exception& e) {
+            std::cerr << "Failed to establish connection: " << e.what() << std::endl;
+            conn.is_valid = false;
+        }
+    } else {
+        conn.last_used = now; // Update last used time
+    }
+    
+    return conn;
+}
+
+
+    
+
+
+
     tl::engine& myEngine;
     std::vector<std::pair<std::string, uint16_t>> nodes; // endpoints and provider_ids
     std::unordered_map<int, int> key_to_node; // Stores known key-node mappings
@@ -203,29 +276,56 @@ private:
     }
 
     // Remote fetch via RPC
-    std::string fetchRemote(int key, int node_idx) {
-        auto start = std::chrono::high_resolution_clock::now();
-        
-        try {
-            tl::remote_procedure remote_kv_fetch = myEngine.define("kv_fetch");
-            tl::endpoint server_ep = myEngine.lookup(nodes[node_idx].first);
-            std::cout << "Remote fetching from " << nodes[node_idx].first << std::endl;
-            try {
-                tl::provider_handle ph(server_ep, nodes[node_idx].second);
-                std::string value = remote_kv_fetch.on(ph)(key);
-                auto end = std::chrono::high_resolution_clock::now();
-                auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-                std::cout << "Remote fetch via RPC completed in " << duration.count() << " microseconds" << std::endl;
-                return value;
-            } catch (const std::exception& e) {
-                std::cerr << "Failed to invoke RPC: " << e.what() << std::endl;
-                return "RPC fetch failed";
-            }
-        } catch (std::exception &e) {
-            std::cerr << "Failed to connect to node " << node_idx << std::endl;
-            return "Connection failed";
-        }
+    //std::string fetchRemote(int key, int node_idx) {
+    //    auto start = std::chrono::high_resolution_clock::now();
+    //    
+    //    try {
+    //        tl::remote_procedure remote_kv_fetch = myEngine.define("kv_fetch");
+    //        tl::endpoint server_ep = myEngine.lookup(nodes[node_idx].first);
+    //        std::cout << "Remote fetching from " << nodes[node_idx].first << std::endl;
+    //        try {
+    //            tl::provider_handle ph(server_ep, nodes[node_idx].second);
+    //            std::string value = remote_kv_fetch.on(ph)(key);
+    //            auto end = std::chrono::high_resolution_clock::now();
+    //            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    //            std::cout << "Remote fetch via RPC completed in " << duration.count() << " microseconds" << std::endl;
+    //            return value;
+    //        } catch (const std::exception& e) {
+    //            std::cerr << "Failed to invoke RPC: " << e.what() << std::endl;
+    //            return "RPC fetch failed";
+    //        }
+    //    } catch (std::exception &e) {
+    //        std::cerr << "Failed to connect to node " << node_idx << std::endl;
+    //        return "Connection failed";
+    //    }
+    //}
+
+
+    // Modified fetchRemote with connection pooling
+std::string fetchRemote(int key, int node_idx) {
+    auto start = std::chrono::high_resolution_clock::now();
+    
+    auto& conn = getConnection(node_idx);
+    if (!conn.is_valid) {
+        return "Connection failed";
     }
+    
+    try {
+        tl::remote_procedure remote_kv_fetch = myEngine.define("kv_fetch");
+        std::string value = remote_kv_fetch.on(conn.provider_handle)(key);
+        
+        auto end = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+        std::cout << "Remote fetch via pooled connection completed in " 
+                  << duration.count() << " microseconds" << std::endl;
+        return value;
+        
+    } catch (const std::exception& e) {
+        std::cerr << "RPC failed, invalidating connection: " << e.what() << std::endl;
+        conn.is_valid = false; // Mark for refresh
+        return "RPC fetch failed";
+    }
+}
 
     // Store data locally (for local keys)
     void storeLocal(int key, const std::string& value) {
@@ -378,21 +478,44 @@ public:
     }
 
     // Method to add a new node
-    void addNode(const std::string& endpoint, uint16_t node_provider_id) {
-        int old_node_count = nodes.size();
-        nodes.push_back(std::make_pair(endpoint, node_provider_id));
-        std::cout << "Added node " << (nodes.size() - 1) << " at " << endpoint << std::endl;
+    //void addNode(const std::string& endpoint, uint16_t node_provider_id) {
+    //    int old_node_count = nodes.size();
+    //    nodes.push_back(std::make_pair(endpoint, node_provider_id));
+    //    std::cout << "Added node " << (nodes.size() - 1) << " at " << endpoint << std::endl;
 
         // Auto-detect local node after first node is added
-        if (nodes.size() == 1 || local_node_id == -1) {
-            detectLocalNode();
-        }
+    //    if (nodes.size() == 1 || local_node_id == -1) {
+    //        detectLocalNode();
+    //    }
 
         // Rebalance keys when adding nodes after initial setup
-        if (old_node_count > 0) {
-            rebalanceKeys(old_node_count);
-        }
+    //    if (old_node_count > 0) {
+    //        rebalanceKeys(old_node_count);
+    //    }
+    //}
+
+
+    // Update addNode to pre-establish connections
+void addNode(const std::string& endpoint, uint16_t node_provider_id) {
+    int old_node_count = nodes.size();
+    nodes.push_back(std::make_pair(endpoint, node_provider_id));
+    
+    int new_node_idx = nodes.size() - 1;
+    std::cout << "Added node " << new_node_idx << " at " << endpoint << std::endl;
+    
+    // Pre-establish connection
+    establishConnection(new_node_idx);
+    
+    if (nodes.size() == 1 || local_node_id == -1) {
+        detectLocalNode();
     }
+    
+    if (old_node_count > 0) {
+        rebalanceKeys(old_node_count);
+    }
+}
+
+
 
     // Method to remove a node (with auto-rebalancing)
     bool removeNode(int node_idx) {
