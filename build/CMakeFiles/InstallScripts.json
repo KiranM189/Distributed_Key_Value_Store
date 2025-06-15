@@ -1,7 +1,7 @@
 {
 	"InstallScripts" : 
 	[
-		"/home/ccbd/kv_upgrade/build/cmake_install.cmake"
+		"/home/ccbd/kvc/build/cmake_install.cmake"
 	],
 	"Parallel" : false
 }

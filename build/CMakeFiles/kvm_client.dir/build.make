@@ -44,19 +44,19 @@ cmake_force:
 SHELL = /bin/sh
 
 # The CMake executable.
-CMAKE_COMMAND = /snap/cmake/1463/bin/cmake
+CMAKE_COMMAND = /snap/cmake/1468/bin/cmake
 
 # The command to remove a file.
-RM = /snap/cmake/1463/bin/cmake -E rm -f
+RM = /snap/cmake/1468/bin/cmake -E rm -f
 
 # Escaping for special characters.
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/ccbd/kv_upgrade
+CMAKE_SOURCE_DIR = /home/ccbd/kvc
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/ccbd/kv_upgrade/build
+CMAKE_BINARY_DIR = /home/ccbd/kvc/build
 
 # Include any dependencies generated for this target.
 include CMakeFiles/kvm_client.dir/depend.make
@@ -73,46 +73,46 @@ CMakeFiles/kvm_client.dir/codegen:
 .PHONY : CMakeFiles/kvm_client.dir/codegen
 
 CMakeFiles/kvm_client.dir/src/KVClient.cpp.o: CMakeFiles/kvm_client.dir/flags.make
-CMakeFiles/kvm_client.dir/src/KVClient.cpp.o: /home/ccbd/kv_upgrade/src/KVClient.cpp
+CMakeFiles/kvm_client.dir/src/KVClient.cpp.o: /home/ccbd/kvc/src/KVClient.cpp
 CMakeFiles/kvm_client.dir/src/KVClient.cpp.o: CMakeFiles/kvm_client.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/ccbd/kv_upgrade/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/kvm_client.dir/src/KVClient.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/kvm_client.dir/src/KVClient.cpp.o -MF CMakeFiles/kvm_client.dir/src/KVClient.cpp.o.d -o CMakeFiles/kvm_client.dir/src/KVClient.cpp.o -c /home/ccbd/kv_upgrade/src/KVClient.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/ccbd/kvc/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/kvm_client.dir/src/KVClient.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/kvm_client.dir/src/KVClient.cpp.o -MF CMakeFiles/kvm_client.dir/src/KVClient.cpp.o.d -o CMakeFiles/kvm_client.dir/src/KVClient.cpp.o -c /home/ccbd/kvc/src/KVClient.cpp
 
 CMakeFiles/kvm_client.dir/src/KVClient.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/kvm_client.dir/src/KVClient.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/ccbd/kv_upgrade/src/KVClient.cpp > CMakeFiles/kvm_client.dir/src/KVClient.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/ccbd/kvc/src/KVClient.cpp > CMakeFiles/kvm_client.dir/src/KVClient.cpp.i
 
 CMakeFiles/kvm_client.dir/src/KVClient.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/kvm_client.dir/src/KVClient.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/ccbd/kv_upgrade/src/KVClient.cpp -o CMakeFiles/kvm_client.dir/src/KVClient.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/ccbd/kvc/src/KVClient.cpp -o CMakeFiles/kvm_client.dir/src/KVClient.cpp.s
 
 CMakeFiles/kvm_client.dir/src/KvStore.cpp.o: CMakeFiles/kvm_client.dir/flags.make
-CMakeFiles/kvm_client.dir/src/KvStore.cpp.o: /home/ccbd/kv_upgrade/src/KvStore.cpp
+CMakeFiles/kvm_client.dir/src/KvStore.cpp.o: /home/ccbd/kvc/src/KvStore.cpp
 CMakeFiles/kvm_client.dir/src/KvStore.cpp.o: CMakeFiles/kvm_client.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/ccbd/kv_upgrade/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/kvm_client.dir/src/KvStore.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/kvm_client.dir/src/KvStore.cpp.o -MF CMakeFiles/kvm_client.dir/src/KvStore.cpp.o.d -o CMakeFiles/kvm_client.dir/src/KvStore.cpp.o -c /home/ccbd/kv_upgrade/src/KvStore.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/ccbd/kvc/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/kvm_client.dir/src/KvStore.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/kvm_client.dir/src/KvStore.cpp.o -MF CMakeFiles/kvm_client.dir/src/KvStore.cpp.o.d -o CMakeFiles/kvm_client.dir/src/KvStore.cpp.o -c /home/ccbd/kvc/src/KvStore.cpp
 
 CMakeFiles/kvm_client.dir/src/KvStore.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/kvm_client.dir/src/KvStore.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/ccbd/kv_upgrade/src/KvStore.cpp > CMakeFiles/kvm_client.dir/src/KvStore.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/ccbd/kvc/src/KvStore.cpp > CMakeFiles/kvm_client.dir/src/KvStore.cpp.i
 
 CMakeFiles/kvm_client.dir/src/KvStore.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/kvm_client.dir/src/KvStore.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/ccbd/kv_upgrade/src/KvStore.cpp -o CMakeFiles/kvm_client.dir/src/KvStore.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/ccbd/kvc/src/KvStore.cpp -o CMakeFiles/kvm_client.dir/src/KvStore.cpp.s
 
 CMakeFiles/kvm_client.dir/src/main_client.cpp.o: CMakeFiles/kvm_client.dir/flags.make
-CMakeFiles/kvm_client.dir/src/main_client.cpp.o: /home/ccbd/kv_upgrade/src/main_client.cpp
+CMakeFiles/kvm_client.dir/src/main_client.cpp.o: /home/ccbd/kvc/src/main_client.cpp
 CMakeFiles/kvm_client.dir/src/main_client.cpp.o: CMakeFiles/kvm_client.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/ccbd/kv_upgrade/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/kvm_client.dir/src/main_client.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/kvm_client.dir/src/main_client.cpp.o -MF CMakeFiles/kvm_client.dir/src/main_client.cpp.o.d -o CMakeFiles/kvm_client.dir/src/main_client.cpp.o -c /home/ccbd/kv_upgrade/src/main_client.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/ccbd/kvc/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/kvm_client.dir/src/main_client.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/kvm_client.dir/src/main_client.cpp.o -MF CMakeFiles/kvm_client.dir/src/main_client.cpp.o.d -o CMakeFiles/kvm_client.dir/src/main_client.cpp.o -c /home/ccbd/kvc/src/main_client.cpp
 
 CMakeFiles/kvm_client.dir/src/main_client.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/kvm_client.dir/src/main_client.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/ccbd/kv_upgrade/src/main_client.cpp > CMakeFiles/kvm_client.dir/src/main_client.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/ccbd/kvc/src/main_client.cpp > CMakeFiles/kvm_client.dir/src/main_client.cpp.i
 
 CMakeFiles/kvm_client.dir/src/main_client.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/kvm_client.dir/src/main_client.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/ccbd/kv_upgrade/src/main_client.cpp -o CMakeFiles/kvm_client.dir/src/main_client.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/ccbd/kvc/src/main_client.cpp -o CMakeFiles/kvm_client.dir/src/main_client.cpp.s
 
 # Object files for target kvm_client
 kvm_client_OBJECTS = \
@@ -133,7 +133,7 @@ kvm_client: /home/ccbd/Key_Value_Store/spack/opt/spack/linux-ubuntu22.04-haswell
 kvm_client: /home/ccbd/Key_Value_Store/spack/opt/spack/linux-ubuntu22.04-haswell/gcc-11.4.0/argobots-1.2-pogddr3ovnhft4kzbqu2bjepl3dxdst7/lib/libabt.so
 kvm_client: /home/ccbd/Key_Value_Store/spack/opt/spack/linux-ubuntu22.04-haswell/gcc-11.4.0/json-c-0.18-x2li5j6jmn6rrwvwag75asrgrgcyui2x/lib/libjson-c.so
 kvm_client: CMakeFiles/kvm_client.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/ccbd/kv_upgrade/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Linking CXX executable kvm_client"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/ccbd/kvc/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Linking CXX executable kvm_client"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/kvm_client.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
@@ -145,6 +145,6 @@ CMakeFiles/kvm_client.dir/clean:
 .PHONY : CMakeFiles/kvm_client.dir/clean
 
 CMakeFiles/kvm_client.dir/depend:
-	cd /home/ccbd/kv_upgrade/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/ccbd/kv_upgrade /home/ccbd/kv_upgrade /home/ccbd/kv_upgrade/build /home/ccbd/kv_upgrade/build /home/ccbd/kv_upgrade/build/CMakeFiles/kvm_client.dir/DependInfo.cmake "--color=$(COLOR)"
+	cd /home/ccbd/kvc/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/ccbd/kvc /home/ccbd/kvc /home/ccbd/kvc/build /home/ccbd/kvc/build /home/ccbd/kvc/build/CMakeFiles/kvm_client.dir/DependInfo.cmake "--color=$(COLOR)"
 .PHONY : CMakeFiles/kvm_client.dir/depend
 
