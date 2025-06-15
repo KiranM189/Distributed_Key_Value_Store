@@ -9,7 +9,7 @@ const std::string KvStore::PERSISTENT_FILE_PATH = "./kvstore_persistent.dat";
 
 // Memory size constants
 const std::size_t MB = 1024 * 1024;
-const std::size_t DEFAULT_MEMORY_SIZE = 100 * MB;
+const std::size_t DEFAULT_MEMORY_SIZE = 500 * MB;
 
 KvStore& KvStore::get_instance(std::size_t size, StorageMode mode) {
     std::cout << "[get_instance] Initializing KvStore with " << (size / MB) << "MB in "

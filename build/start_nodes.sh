@@ -3,7 +3,7 @@
 # Supports both in-memory and persistent storage modes
 # Default configuration
 BUILD_DIR="../build"
-SHARED_MEM_SIZE="100M"  # Default 100MB as per your C++ code
+SHARED_MEM_SIZE="500M"  # Default 100MB as per your C++ code
 PERSISTENCE_MODE=""
 SERVER_PORT="8080"
 
@@ -228,6 +228,7 @@ SERVER_PID=$!
 
 # Wait a moment to see if the server started successfully
 sleep 2
+
 
 if kill -0 $SERVER_PID 2>/dev/null; then
     print_success "Server started successfully!"

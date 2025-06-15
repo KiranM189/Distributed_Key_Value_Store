@@ -1,4 +1,5 @@
 #include "KVClient.hpp"
+#include "kvstore.hpp"
 #include "ThalliumDistributor.hpp"
 #include <limits>
 #include <chrono>
@@ -14,13 +15,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
-
-
-// Local hash-based cache for O(1) lookups
-#include <unordered_map>
-std::unordered_map<int, std::string> local_cache;
-std::string local_ip_cached = ""; // Cache local IP to avoid repeated calls
-
+#include <algorithm>
+#include <cctype>
 
 // Helper function to parse command arguments
 std::vector<std::string> parseCommand(const std::string& command) {
@@ -90,7 +86,6 @@ std::string extractIPFromEndpoint(const std::string& endpoint) {
 
 
 
-
 // Help function
 void printHelp() {
     std::cout << "\nDistributed Key-Value Store Commands:" << std::endl;
@@ -105,6 +100,7 @@ void printHelp() {
     std::cout << "  distribution             - Show distribution of keys across nodes" << std::endl;
     std::cout << "  benchmark                - To run with sequential fetch pattern" << std::endl;
     std::cout << "  benchmark1               - Run benchmark with random fetch pattern" << std::endl;
+    std::cout << "  status                   - Show storage mode and cluster status" << std::endl;
     std::cout << "  hash <key>               - Show which node a key would be assigned to" << std::endl;
     std::cout << "  help                     - Show this help message" << std::endl;
     std::cout << "  exit                     - Exit the program" << std::endl;
@@ -150,18 +146,6 @@ void runBenchmark(ThalliumDistributor& distributor) {
         std::cout << "Inserting key " << pair.first << "... " << std::flush;
         try {
             distributor.put(pair.first, pair.second);
-            
-            // Add to local cache if this key maps to local node
-            if (local_ip_cached.empty()) {
-                local_ip_cached = getLocalIPAddress();
-            }
-            int node_idx = pair.first % distributor.getNodeCount();
-            std::string target_node_endpoint = distributor.getNodeEndpoint(node_idx);
-            std::string target_ip = extractIPFromEndpoint(target_node_endpoint);
-            if (target_ip == local_ip_cached) {
-                local_cache[pair.first] = pair.second;
-            }
-            
             successful_inserts++;
             auto end = std::chrono::high_resolution_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
@@ -205,19 +189,15 @@ void runBenchmark(ThalliumDistributor& distributor) {
             std::string target_node_endpoint = distributor.getNodeEndpoint(node_idx);
             std::string target_ip = extractIPFromEndpoint(target_node_endpoint);
             bool is_local = (target_ip == local_ip);
-	    std::cout << "DEBUG - Key: " << key << ", Node: " << node_idx 
+            std::cout << "DEBUG - Key: " << key << ", Node: " << node_idx 
             << ", Endpoint: " << target_node_endpoint 
             << ", Target IP: " << target_ip 
             << ", Local IP: " << local_ip 
             << ", Is Local: " << is_local << std::endl;
-            std::string value;
-	    if (is_local && local_cache.find(key) != local_cache.end()) {
-                // O(1) hash lookup for local data
-                value = local_cache[key];
-            } else {
-                // Network call for remote data
-                value = distributor.get(key);
-            }
+            
+            // Always use the distributor.get() method - no local cache optimization
+            std::string value = distributor.get(key);
+            
             auto end = std::chrono::high_resolution_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
             double time_ms = duration.count() / 1000.0;
@@ -339,18 +319,6 @@ void runBenchmark1(ThalliumDistributor& distributor) {
         std::cout << "Inserting key " << pair.first << "... " << std::flush;
         try {
             distributor.put(pair.first, pair.second);
-            
-            // Add to local cache if this key maps to local node
-            if (local_ip_cached.empty()) {
-                local_ip_cached = getLocalIPAddress();
-            }
-            int node_idx = pair.first % distributor.getNodeCount();
-            std::string target_node_endpoint = distributor.getNodeEndpoint(node_idx);
-            std::string target_ip = extractIPFromEndpoint(target_node_endpoint);
-            if (target_ip == local_ip_cached) {
-                local_cache[pair.first] = pair.second;
-            }
-            
             successful_inserts++;
             auto end = std::chrono::high_resolution_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
@@ -405,19 +373,15 @@ void runBenchmark1(ThalliumDistributor& distributor) {
             std::string target_node_endpoint = distributor.getNodeEndpoint(node_idx);
             std::string target_ip = extractIPFromEndpoint(target_node_endpoint);
             bool is_local = (target_ip == local_ip);
-	    std::cout << "DEBUG - Key: " << key << ", Node: " << node_idx 
+            std::cout << "DEBUG - Key: " << key << ", Node: " << node_idx 
             << ", Endpoint: " << target_node_endpoint 
             << ", Target IP: " << target_ip 
             << ", Local IP: " << local_ip 
             << ", Is Local: " << is_local << std::endl;
-            std::string value;
-	    if (is_local && local_cache.find(key) != local_cache.end()) {
-                // O(1) hash lookup for local data
-                value = local_cache[key];
-            } else {
-                // Network call for remote data
-                value = distributor.get(key);
-            }
+            
+            // Always use the distributor.get() method - no local cache optimization
+            std::string value = distributor.get(key);
+            
             auto end = std::chrono::high_resolution_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
             double time_ms = duration.count() / 1000.0;
@@ -501,9 +465,40 @@ void runBenchmark1(ThalliumDistributor& distributor) {
 int main(int argc, char** argv) {
     uint16_t provider_id = 1;
     tl::engine myEngine("ofi+tcp", THALLIUM_CLIENT_MODE);
-    ThalliumDistributor distributor(myEngine, provider_id);
-    std::cout << "\nModulo-based Key-Value Store" << std::endl;
-    std::cout << "===========================" << std::endl;
+
+std::cout << "\nModulo-based Key-Value Store" << std::endl;
+std::cout << "===========================" << std::endl;
+
+// Prompt user for storage mode
+std::string mode;
+std::cout << "Enter server storage mode (memory/persistent): ";
+std::getline(std::cin, mode);
+
+// Convert to lowercase for comparison
+std::transform(mode.begin(), mode.end(), mode.begin(), ::tolower);
+
+StorageMode storage_mode;
+if (mode == "persistent") {
+    storage_mode = StorageMode::PERSISTENT;
+} else if (mode == "memory") {
+    storage_mode = StorageMode::MEMORY;
+} else {
+    std::cout << "Invalid storage mode. Defaulting to memory mode." << std::endl;
+    storage_mode = StorageMode::MEMORY;
+}
+
+// Create KvStore instance for local storage
+size_t mem_size = 500ULL * 1024 * 1024; // 500MB - reasonable size
+	KvStore& local_store = KvStore::get_instance(mem_size, storage_mode);
+	std::cout << "Storage Mode: " << (storage_mode == StorageMode::PERSISTENT ? "PERSISTENT" : "IN-MEMORY") << std::endl;
+if (storage_mode == StorageMode::PERSISTENT) {
+    std::cout << "Data will be saved to: kvstore_persistent.dat" << std::endl;
+} else {
+    std::cout << "Data will be stored in memory only" << std::endl;
+}
+
+	// Pass the local_store to ThalliumDistributor
+	ThalliumDistributor distributor(myEngine, provider_id, &local_store);
     std::cout << "Hashing mechanism: key % number_of_nodes" << std::endl;
 
     // Handle initial nodes from command line or default setup
@@ -557,57 +552,19 @@ int main(int argc, char** argv) {
                     value += " " + args[i];
                 }
                 if (distributor.getNodeCount() == 0) {
-    			std::cout << "No nodes available. Add nodes first." << std::endl;
-    			continue;
-		}
-		int node_idx = key % distributor.getNodeCount();
-		std::string local_ip = getLocalIPAddress();
-		std::string target_node_endpoint = distributor.getNodeEndpoint(node_idx);
-		std::string target_ip = extractIPFromEndpoint(target_node_endpoint);
-		bool is_local = (target_ip == local_ip);
-		std::cout << "Key " << key << " hashes to Node " << node_idx << std::endl;
-		distributor.put(key, value);
-            } catch (const std::exception& e) {
-                std::cout << "Error: " << e.what() << "\nUsage: put <key> <value>\n";
-            }
-        } else if (action == "update" && args.size() >= 3) {
-            try {
-                int key = std::stoi(args[1]);
-                // Combine all remaining arguments as the value
-                std::string value = args[2];
-                for (size_t i = 3; i < args.size(); i++) {
-                    value += " " + args[i];
+                    std::cout << "No nodes available. Add nodes first." << std::endl;
+                    continue;
                 }
-                if (distributor.getNodeCount() == 0) {
-    			std::cout << "No nodes available. Add nodes first." << std::endl;
-    			continue;
-		}
-		int node_idx = key % distributor.getNodeCount();
-		std::string local_ip = getLocalIPAddress();
-		std::string target_node_endpoint = distributor.getNodeEndpoint(node_idx);
-		std::string target_ip = extractIPFromEndpoint(target_node_endpoint);
-		bool is_local = (target_ip == local_ip);
-		std::cout << "Key " << key << " hashes to Node " << node_idx << std::endl;
-		distributor.update(key, value);
+                int node_idx = key % distributor.getNodeCount();
+                std::string local_ip = getLocalIPAddress();
+                std::string target_node_endpoint = distributor.getNodeEndpoint(node_idx);
+                std::string target_ip = extractIPFromEndpoint(target_node_endpoint);
+                bool is_local = (target_ip == local_ip);
+                std::cout << "Key " << key << " hashes to Node " << node_idx << std::endl;
+                distributor.put(key, value);
+                std::cout << "Put operation completed successfully" << std::endl;
             } catch (const std::exception& e) {
-                std::cout << "Error: " << e.what() << "\nUsage: update <key> <value>\n";
-            }
-        } else if (action == "delete" && args.size() >= 2) {
-            try {
-                int key = std::stoi(args[1]);
-                if (distributor.getNodeCount() == 0) {
-    			std::cout << "No nodes available. Add nodes first." << std::endl;
-    			continue;
-		}
-		int node_idx = key % distributor.getNodeCount();
-		std::string local_ip = getLocalIPAddress();
-		std::string target_node_endpoint = distributor.getNodeEndpoint(node_idx);
-		std::string target_ip = extractIPFromEndpoint(target_node_endpoint);
-		bool is_local = (target_ip == local_ip);
-		std::cout << "Key " << key << " hashes to Node " << node_idx << std::endl;
-		distributor.deleteKey(key);
-            } catch (const std::exception& e) {
-                std::cout << "Error: " << e.what() << "\nUsage: delete <key>\n";
+                std::cout << "Error: " << e.what() << std::endl;
             }
         } else if (action == "get" && args.size() >= 2) {
             try {
@@ -617,30 +574,59 @@ int main(int argc, char** argv) {
                     continue;
                 }
                 int node_idx = key % distributor.getNodeCount();
-                std::string local_ip = getLocalIPAddress();
-		std::string target_node_endpoint = distributor.getNodeEndpoint(node_idx);
-		std::string target_ip = extractIPFromEndpoint(target_node_endpoint);
-		bool is_local = (target_ip == local_ip);
-		std::cout << "Key " << key << " hashes to Node " << node_idx << std::endl;
+                std::cout << "Key " << key << " hashes to Node " << node_idx << std::endl;
                 std::string value = distributor.get(key);
-                if (value != "Key not found in mappings" && value != "RPC fetch failed" && value != "Connection failed") {
-                    std::cout << "Value: " << value << std::endl;
-                }
+                std::cout << "Value: " << value << std::endl;
             } catch (const std::exception& e) {
-                std::cout << "Error: " << e.what() << "\nUsage: get <key>\n";
+                std::cout << "Error: " << e.what() << std::endl;
+            }
+        } else if (action == "update" && args.size() >= 3) {
+            try {
+                int key = std::stoi(args[1]);
+                std::string value = args[2];
+                for (size_t i = 3; i < args.size(); i++) {
+                    value += " " + args[i];
+                }
+                if (distributor.getNodeCount() == 0) {
+                    std::cout << "No nodes available. Add nodes first." << std::endl;
+                    continue;
+                }
+                int node_idx = key % distributor.getNodeCount();
+                std::cout << "Key " << key << " hashes to Node " << node_idx << std::endl;
+                distributor.update(key, value);
+                std::cout << "Update operation completed successfully" << std::endl;
+            } catch (const std::exception& e) {
+                std::cout << "Error: " << e.what() << std::endl;
+            }
+        } else if (action == "delete" && args.size() >= 2) {
+            try {
+                int key = std::stoi(args[1]);
+                if (distributor.getNodeCount() == 0) {
+                    std::cout << "No nodes available. Add nodes first." << std::endl;
+                    continue;
+                }
+                int node_idx = key % distributor.getNodeCount();
+                std::cout << "Key " << key << " hashes to Node " << node_idx << std::endl;
+                distributor.deleteKey(key);
+                std::cout << "Delete operation completed successfully" << std::endl;
+            } catch (const std::exception& e) {
+                std::cout << "Error: " << e.what() << std::endl;
             }
         } else if (action == "addnode" && args.size() >= 2) {
-            std::string endpoint = args[1];
-            distributor.addNode(endpoint, provider_id);
-            std::cout << "Node added. New cluster size: " << distributor.getNodeCount() << std::endl;
+            try {
+                std::string endpoint = args[1];
+                distributor.addNode(endpoint, provider_id);
+                std::cout << "Node added: " << endpoint << std::endl;
+            } catch (const std::exception& e) {
+                std::cout << "Error adding node: " << e.what() << std::endl;
+            }
         } else if (action == "removenode" && args.size() >= 2) {
             try {
-                int node_idx = std::stoi(args[1]);
-                if (distributor.removeNode(node_idx)) {
-                    std::cout << "Node removed. New cluster size: " << distributor.getNodeCount() << std::endl;
-                }
+                int node_index = std::stoi(args[1]);
+                distributor.removeNode(node_index);
+                std::cout << "Node removed at index: " << node_index << std::endl;
             } catch (const std::exception& e) {
-                std::cout << "Error: " << e.what() << "\nUsage: removenode <node_index>\n";
+                std::cout << "Error removing node: " << e.what() << std::endl;
             }
         } else if (action == "listnodes") {
             distributor.listNodes();
@@ -654,25 +640,35 @@ int main(int argc, char** argv) {
                     continue;
                 }
                 int node_idx = key % distributor.getNodeCount();
-                std::cout << "Key " << key << " would be assigned to Node " << node_idx << std::endl;
+                std::string endpoint = distributor.getNodeEndpoint(node_idx);
+                std::cout << "Key " << key << " would be assigned to Node " << node_idx 
+                         << " (" << endpoint << ")" << std::endl;
             } catch (const std::exception& e) {
-                std::cout << "Error: " << e.what() << "\nUsage: hash <key>\n";
+                std::cout << "Error: " << e.what() << std::endl;
             }
-        }
-        else if (action == "benchmark"){
-                std::cout << "Starting integrated benchmark..." << std::endl;
-                runBenchmark(distributor);
+        } else if (action == "benchmark") {
+            runBenchmark(distributor);
+        } else if (action == "benchmark1") {
+            runBenchmark1(distributor);
         }
 
-        else if (action == "benchmark1"){
-                 std::cout << "Starting integrated benchmark1 (random fetch)..." << std::endl;
-                 runBenchmark1(distributor);
-        }
-         else {
-            std::cout << "Unknown or incomplete command: " << action << std::endl;
-            std::cout << "Type 'help' for available commands." << std::endl;
+	else if (action == "status") {
+    std::cout << "\n=== Cluster Status ===" << std::endl;
+    std::cout << "Storage Mode: " << (storage_mode == StorageMode::PERSISTENT ? "PERSISTENT" : "IN-MEMORY") << std::endl;
+    std::cout << "Nodes in cluster: " << distributor.getNodeCount() << std::endl;
+    if (storage_mode == StorageMode::PERSISTENT) {
+        std::cout << "Data file: kvstore_persistent.dat" << std::endl;
+    } else {
+        std::cout << "Memory size: " << mem_size / (1024*1024) << "MB" << std::endl;
+    }
+    distributor.listNodes();
+	}
+
+	 else {
+            std::cout << "Unknown command. Type 'help' for available commands." << std::endl;
         }
     }
-    std::cout << "Exiting distributed key-value store client..." << std::endl;
+
+    std::cout << "Goodbye!" << std::endl;
     return 0;
 }
