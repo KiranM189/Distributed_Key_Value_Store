@@ -584,7 +584,7 @@ public:
         // Direct local access using KvStore - NO RPC CALLS FOR LOCAL OPERATIONS
         if (node_idx == local_node_id && local_kv_store != nullptr) {
             try {
-                local_kv_store->Insert(key, value);
+                local_kv_store->Update(key, value);
                 std::cout << "Updated via direct KvStore access: " << key << " -> " << value
                           << " on local Node " << node_idx << " (" << nodes[node_idx].first << ")\n";
                 return;
