@@ -6,7 +6,7 @@
 #include <thallium.hpp>
 #include <thallium/serialization/stl/string.hpp>
 #include <unordered_map>
-#include "kvstore.hpp"
+#include "KVStore.hpp"
 
 namespace tl = thallium;
 

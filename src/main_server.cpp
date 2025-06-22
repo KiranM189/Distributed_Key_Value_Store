@@ -1,5 +1,5 @@
 #include "KVServer.hpp"
-#include "kvstore.hpp"
+#include "KVStore.hpp"
 #include <iostream>
 #include <string>
 #include <algorithm>
@@ -135,7 +135,8 @@ int main(int argc, char** argv) {
               << (storage_mode == StorageMode::PERSISTENT ? "PERSISTENT" : "MEMORY") << " mode\n";
     
     // CRITICAL CHANGE: Pass both memory size AND storage mode
-    KvStore &kv = KvStore::get_instance(mem_size, storage_mode);
+    // In your server main function
+    KvStore& kv = KvStore::get_instance(mem_size, storage_mode, ConnectionMode::SERVER);
     std::cout << "KvStore initialized successfully" << std::endl;
     
     // Create and start the KVServer

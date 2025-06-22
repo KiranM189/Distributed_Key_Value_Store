@@ -1,6 +1,6 @@
 CMakeFiles/kvm_client.dir/src/main_client.cpp.o: \
- /home/ccbd/kvc/src/main_client.cpp /usr/include/stdc-predef.h \
- /home/ccbd/kvc/include/KVClient.hpp /usr/include/c++/11/iostream \
+ /home/ccbd/kvq/src/main_client.cpp /usr/include/stdc-predef.h \
+ /home/ccbd/kvq/include/KVClient.hpp /usr/include/c++/11/iostream \
  /usr/include/x86_64-linux-gnu/c++/11/bits/c++config.h \
  /usr/include/x86_64-linux-gnu/c++/11/bits/os_defines.h \
  /usr/include/features.h /usr/include/features-time64.h \
@@ -539,7 +539,7 @@ CMakeFiles/kvm_client.dir/src/main_client.cpp.o: \
  /home/ccbd/Key_Value_Store/spack/opt/spack/linux-ubuntu22.04-haswell/gcc-11.4.0/mochi-thallium-0.15.0-qcjptvsad7fmz6tln6do4hxvii2qorxh/include/thallium/future.hpp \
  /home/ccbd/Key_Value_Store/spack/opt/spack/linux-ubuntu22.04-haswell/gcc-11.4.0/mochi-thallium-0.15.0-qcjptvsad7fmz6tln6do4hxvii2qorxh/include/thallium/xstream_barrier.hpp \
  /home/ccbd/Key_Value_Store/spack/opt/spack/linux-ubuntu22.04-haswell/gcc-11.4.0/mochi-thallium-0.15.0-qcjptvsad7fmz6tln6do4hxvii2qorxh/include/thallium/self.hpp \
- /home/ccbd/kvc/include/kvstore.hpp \
+ /home/ccbd/kvq/include/KVStore.hpp \
  /home/ccbd/Key_Value_Store/spack/opt/spack/linux-ubuntu22.04-haswell/gcc-11.4.0/boost-1.87.0-jjp5eoti53uwp37unc2ggmjl37lkn7bn/include/boost/interprocess/managed_shared_memory.hpp \
  /home/ccbd/Key_Value_Store/spack/opt/spack/linux-ubuntu22.04-haswell/gcc-11.4.0/boost-1.87.0-jjp5eoti53uwp37unc2ggmjl37lkn7bn/include/boost/config.hpp \
  /home/ccbd/Key_Value_Store/spack/opt/spack/linux-ubuntu22.04-haswell/gcc-11.4.0/boost-1.87.0-jjp5eoti53uwp37unc2ggmjl37lkn7bn/include/boost/config/user.hpp \
@@ -895,4 +895,73 @@ CMakeFiles/kvm_client.dir/src/main_client.cpp.o: \
  /home/ccbd/Key_Value_Store/spack/opt/spack/linux-ubuntu22.04-haswell/gcc-11.4.0/boost-1.87.0-jjp5eoti53uwp37unc2ggmjl37lkn7bn/include/boost/container_hash/detail/hash_range.hpp \
  /home/ccbd/Key_Value_Store/spack/opt/spack/linux-ubuntu22.04-haswell/gcc-11.4.0/boost-1.87.0-jjp5eoti53uwp37unc2ggmjl37lkn7bn/include/boost/container_hash/detail/mulx.hpp \
  /usr/include/c++/11/complex /usr/include/c++/11/optional \
- /usr/include/c++/11/variant
+ /usr/include/c++/11/variant /home/ccbd/kvq/include/KVStore.hpp \
+ /home/ccbd/kvq/include/KVDistributor.hpp \
+ /home/ccbd/kvq/include/KVClient.hpp /home/ccbd/kvq/include/config.hpp \
+ /usr/include/nlohmann/json.hpp /usr/include/c++/11/numeric \
+ /usr/include/c++/11/bits/stl_numeric.h \
+ /usr/include/c++/11/pstl/glue_numeric_defs.h \
+ /usr/include/nlohmann/adl_serializer.hpp \
+ /usr/include/nlohmann/detail/conversions/from_json.hpp \
+ /usr/include/c++/11/forward_list /usr/include/c++/11/bits/forward_list.h \
+ /usr/include/c++/11/bits/forward_list.tcc /usr/include/c++/11/map \
+ /usr/include/c++/11/bits/stl_tree.h /usr/include/c++/11/bits/stl_map.h \
+ /usr/include/c++/11/bits/stl_multimap.h /usr/include/c++/11/valarray \
+ /usr/include/c++/11/bits/valarray_array.h \
+ /usr/include/c++/11/bits/valarray_array.tcc \
+ /usr/include/c++/11/bits/valarray_before.h \
+ /usr/include/c++/11/bits/slice_array.h \
+ /usr/include/c++/11/bits/valarray_after.h \
+ /usr/include/c++/11/bits/gslice.h \
+ /usr/include/c++/11/bits/gslice_array.h \
+ /usr/include/c++/11/bits/mask_array.h \
+ /usr/include/c++/11/bits/indirect_array.h \
+ /usr/include/nlohmann/detail/exceptions.hpp \
+ /usr/include/nlohmann/detail/value_t.hpp \
+ /usr/include/nlohmann/detail/string_escape.hpp \
+ /usr/include/nlohmann/detail/macro_scope.hpp \
+ /usr/include/nlohmann/thirdparty/hedley/hedley.hpp \
+ /usr/include/nlohmann/detail/meta/detected.hpp \
+ /usr/include/nlohmann/detail/meta/void_t.hpp \
+ /usr/include/nlohmann/detail/input/position_t.hpp \
+ /usr/include/nlohmann/detail/meta/cpp_future.hpp \
+ /usr/include/nlohmann/detail/meta/identity_tag.hpp \
+ /usr/include/nlohmann/detail/meta/type_traits.hpp \
+ /usr/include/nlohmann/detail/iterators/iterator_traits.hpp \
+ /usr/include/nlohmann/detail/meta/call_std/begin.hpp \
+ /usr/include/nlohmann/detail/meta/call_std/end.hpp \
+ /usr/include/nlohmann/json_fwd.hpp /usr/include/c++/11/filesystem \
+ /usr/include/c++/11/bits/fs_fwd.h /usr/include/c++/11/bits/fs_path.h \
+ /usr/include/c++/11/iomanip /usr/include/c++/11/bits/quoted_string.h \
+ /usr/include/c++/11/codecvt /usr/include/c++/11/bits/fs_dir.h \
+ /usr/include/c++/11/bits/fs_ops.h \
+ /usr/include/nlohmann/detail/conversions/to_json.hpp \
+ /usr/include/nlohmann/detail/iterators/iteration_proxy.hpp \
+ /usr/include/nlohmann/byte_container_with_subtype.hpp \
+ /usr/include/nlohmann/detail/hash.hpp \
+ /usr/include/nlohmann/detail/input/binary_reader.hpp \
+ /usr/include/nlohmann/detail/input/input_adapters.hpp \
+ /usr/include/nlohmann/detail/input/json_sax.hpp \
+ /usr/include/nlohmann/detail/input/lexer.hpp \
+ /usr/include/nlohmann/detail/meta/is_sax.hpp \
+ /usr/include/nlohmann/detail/input/parser.hpp \
+ /usr/include/nlohmann/detail/iterators/internal_iterator.hpp \
+ /usr/include/nlohmann/detail/iterators/primitive_iterator.hpp \
+ /usr/include/nlohmann/detail/iterators/iter_impl.hpp \
+ /usr/include/nlohmann/detail/iterators/json_reverse_iterator.hpp \
+ /usr/include/nlohmann/detail/json_pointer.hpp \
+ /usr/include/nlohmann/detail/json_ref.hpp \
+ /usr/include/nlohmann/detail/output/binary_writer.hpp \
+ /usr/include/nlohmann/detail/output/output_adapters.hpp \
+ /usr/include/nlohmann/detail/output/serializer.hpp \
+ /usr/include/nlohmann/detail/conversions/to_chars.hpp \
+ /usr/include/nlohmann/ordered_map.hpp \
+ /usr/include/nlohmann/detail/macro_unscope.hpp \
+ /usr/include/nlohmann/thirdparty/hedley/hedley_undef.hpp \
+ /usr/include/c++/11/random /usr/include/c++/11/bits/random.h \
+ /usr/include/x86_64-linux-gnu/c++/11/bits/opt_random.h \
+ /usr/include/c++/11/bits/random.tcc /usr/include/c++/11/thread \
+ /usr/include/c++/11/stop_token /usr/include/c++/11/bits/std_thread.h \
+ /usr/include/c++/11/semaphore /usr/include/c++/11/bits/semaphore_base.h \
+ /usr/include/c++/11/bits/atomic_timed_wait.h \
+ /usr/include/c++/11/bits/this_thread_sleep.h

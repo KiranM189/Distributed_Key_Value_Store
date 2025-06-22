@@ -1,5 +1,4 @@
-/home/ccbd/kvc/build/CMakeFiles/kvm_server.dir
-/home/ccbd/kvc/build/CMakeFiles/kvm_client.dir
-/home/ccbd/kvc/build/CMakeFiles/kvm_client_integrated.dir
-/home/ccbd/kvc/build/CMakeFiles/edit_cache.dir
-/home/ccbd/kvc/build/CMakeFiles/rebuild_cache.dir
+/home/ccbd/kvq/build/CMakeFiles/kvm_server.dir
+/home/ccbd/kvq/build/CMakeFiles/kvm_client.dir
+/home/ccbd/kvq/build/CMakeFiles/edit_cache.dir
+/home/ccbd/kvq/build/CMakeFiles/rebuild_cache.dir

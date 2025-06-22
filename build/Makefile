@@ -57,10 +57,10 @@ RM = /snap/cmake/1468/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/ccbd/kvc
+CMAKE_SOURCE_DIR = /home/ccbd/kvq
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/ccbd/kvc/build
+CMAKE_BINARY_DIR = /home/ccbd/kvq/build
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -87,9 +87,9 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/ccbd/kvc/build/CMakeFiles /home/ccbd/kvc/build//CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/ccbd/kvq/build/CMakeFiles /home/ccbd/kvq/build//CMakeFiles/progress.marks
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/ccbd/kvc/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/ccbd/kvq/build/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
@@ -142,26 +142,12 @@ kvm_client/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_client.dir/build.make CMakeFiles/kvm_client.dir/build
 .PHONY : kvm_client/fast
 
-#=============================================================================
-# Target rules for targets named kvm_client_integrated
-
-# Build rule for target.
-kvm_client_integrated: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 kvm_client_integrated
-.PHONY : kvm_client_integrated
-
-# fast build rule for target.
-kvm_client_integrated/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_client_integrated.dir/build.make CMakeFiles/kvm_client_integrated.dir/build
-.PHONY : kvm_client_integrated/fast
-
 src/KVClient.o: src/KVClient.cpp.o
 .PHONY : src/KVClient.o
 
 # target to build an object file
 src/KVClient.cpp.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_client.dir/build.make CMakeFiles/kvm_client.dir/src/KVClient.cpp.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_client_integrated.dir/build.make CMakeFiles/kvm_client_integrated.dir/src/KVClient.cpp.o
 .PHONY : src/KVClient.cpp.o
 
 src/KVClient.i: src/KVClient.cpp.i
@@ -170,7 +156,6 @@ src/KVClient.i: src/KVClient.cpp.i
 # target to preprocess a source file
 src/KVClient.cpp.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_client.dir/build.make CMakeFiles/kvm_client.dir/src/KVClient.cpp.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_client_integrated.dir/build.make CMakeFiles/kvm_client_integrated.dir/src/KVClient.cpp.i
 .PHONY : src/KVClient.cpp.i
 
 src/KVClient.s: src/KVClient.cpp.s
@@ -179,8 +164,31 @@ src/KVClient.s: src/KVClient.cpp.s
 # target to generate assembly for a file
 src/KVClient.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_client.dir/build.make CMakeFiles/kvm_client.dir/src/KVClient.cpp.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_client_integrated.dir/build.make CMakeFiles/kvm_client_integrated.dir/src/KVClient.cpp.s
 .PHONY : src/KVClient.cpp.s
+
+src/KVDistributor.o: src/KVDistributor.cpp.o
+.PHONY : src/KVDistributor.o
+
+# target to build an object file
+src/KVDistributor.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_client.dir/build.make CMakeFiles/kvm_client.dir/src/KVDistributor.cpp.o
+.PHONY : src/KVDistributor.cpp.o
+
+src/KVDistributor.i: src/KVDistributor.cpp.i
+.PHONY : src/KVDistributor.i
+
+# target to preprocess a source file
+src/KVDistributor.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_client.dir/build.make CMakeFiles/kvm_client.dir/src/KVDistributor.cpp.i
+.PHONY : src/KVDistributor.cpp.i
+
+src/KVDistributor.s: src/KVDistributor.cpp.s
+.PHONY : src/KVDistributor.s
+
+# target to generate assembly for a file
+src/KVDistributor.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_client.dir/build.make CMakeFiles/kvm_client.dir/src/KVDistributor.cpp.s
+.PHONY : src/KVDistributor.cpp.s
 
 src/KVServer.o: src/KVServer.cpp.o
 .PHONY : src/KVServer.o
@@ -206,35 +214,56 @@ src/KVServer.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_server.dir/build.make CMakeFiles/kvm_server.dir/src/KVServer.cpp.s
 .PHONY : src/KVServer.cpp.s
 
-src/KvStore.o: src/KvStore.cpp.o
-.PHONY : src/KvStore.o
+src/KVStore.o: src/KVStore.cpp.o
+.PHONY : src/KVStore.o
 
 # target to build an object file
-src/KvStore.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_server.dir/build.make CMakeFiles/kvm_server.dir/src/KvStore.cpp.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_client.dir/build.make CMakeFiles/kvm_client.dir/src/KvStore.cpp.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_client_integrated.dir/build.make CMakeFiles/kvm_client_integrated.dir/src/KvStore.cpp.o
-.PHONY : src/KvStore.cpp.o
+src/KVStore.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_server.dir/build.make CMakeFiles/kvm_server.dir/src/KVStore.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_client.dir/build.make CMakeFiles/kvm_client.dir/src/KVStore.cpp.o
+.PHONY : src/KVStore.cpp.o
 
-src/KvStore.i: src/KvStore.cpp.i
-.PHONY : src/KvStore.i
+src/KVStore.i: src/KVStore.cpp.i
+.PHONY : src/KVStore.i
 
 # target to preprocess a source file
-src/KvStore.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_server.dir/build.make CMakeFiles/kvm_server.dir/src/KvStore.cpp.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_client.dir/build.make CMakeFiles/kvm_client.dir/src/KvStore.cpp.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_client_integrated.dir/build.make CMakeFiles/kvm_client_integrated.dir/src/KvStore.cpp.i
-.PHONY : src/KvStore.cpp.i
+src/KVStore.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_server.dir/build.make CMakeFiles/kvm_server.dir/src/KVStore.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_client.dir/build.make CMakeFiles/kvm_client.dir/src/KVStore.cpp.i
+.PHONY : src/KVStore.cpp.i
 
-src/KvStore.s: src/KvStore.cpp.s
-.PHONY : src/KvStore.s
+src/KVStore.s: src/KVStore.cpp.s
+.PHONY : src/KVStore.s
 
 # target to generate assembly for a file
-src/KvStore.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_server.dir/build.make CMakeFiles/kvm_server.dir/src/KvStore.cpp.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_client.dir/build.make CMakeFiles/kvm_client.dir/src/KvStore.cpp.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_client_integrated.dir/build.make CMakeFiles/kvm_client_integrated.dir/src/KvStore.cpp.s
-.PHONY : src/KvStore.cpp.s
+src/KVStore.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_server.dir/build.make CMakeFiles/kvm_server.dir/src/KVStore.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_client.dir/build.make CMakeFiles/kvm_client.dir/src/KVStore.cpp.s
+.PHONY : src/KVStore.cpp.s
+
+src/config.o: src/config.cpp.o
+.PHONY : src/config.o
+
+# target to build an object file
+src/config.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_client.dir/build.make CMakeFiles/kvm_client.dir/src/config.cpp.o
+.PHONY : src/config.cpp.o
+
+src/config.i: src/config.cpp.i
+.PHONY : src/config.i
+
+# target to preprocess a source file
+src/config.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_client.dir/build.make CMakeFiles/kvm_client.dir/src/config.cpp.i
+.PHONY : src/config.cpp.i
+
+src/config.s: src/config.cpp.s
+.PHONY : src/config.s
+
+# target to generate assembly for a file
+src/config.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_client.dir/build.make CMakeFiles/kvm_client.dir/src/config.cpp.s
+.PHONY : src/config.cpp.s
 
 src/main_client.o: src/main_client.cpp.o
 .PHONY : src/main_client.o
@@ -259,30 +288,6 @@ src/main_client.s: src/main_client.cpp.s
 src/main_client.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_client.dir/build.make CMakeFiles/kvm_client.dir/src/main_client.cpp.s
 .PHONY : src/main_client.cpp.s
-
-src/main_integrated_client.o: src/main_integrated_client.cpp.o
-.PHONY : src/main_integrated_client.o
-
-# target to build an object file
-src/main_integrated_client.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_client_integrated.dir/build.make CMakeFiles/kvm_client_integrated.dir/src/main_integrated_client.cpp.o
-.PHONY : src/main_integrated_client.cpp.o
-
-src/main_integrated_client.i: src/main_integrated_client.cpp.i
-.PHONY : src/main_integrated_client.i
-
-# target to preprocess a source file
-src/main_integrated_client.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_client_integrated.dir/build.make CMakeFiles/kvm_client_integrated.dir/src/main_integrated_client.cpp.i
-.PHONY : src/main_integrated_client.cpp.i
-
-src/main_integrated_client.s: src/main_integrated_client.cpp.s
-.PHONY : src/main_integrated_client.s
-
-# target to generate assembly for a file
-src/main_integrated_client.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_client_integrated.dir/build.make CMakeFiles/kvm_client_integrated.dir/src/main_integrated_client.cpp.s
-.PHONY : src/main_integrated_client.cpp.s
 
 src/main_server.o: src/main_server.cpp.o
 .PHONY : src/main_server.o
@@ -317,23 +322,25 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... kvm_client"
-	@echo "... kvm_client_integrated"
 	@echo "... kvm_server"
 	@echo "... src/KVClient.o"
 	@echo "... src/KVClient.i"
 	@echo "... src/KVClient.s"
+	@echo "... src/KVDistributor.o"
+	@echo "... src/KVDistributor.i"
+	@echo "... src/KVDistributor.s"
 	@echo "... src/KVServer.o"
 	@echo "... src/KVServer.i"
 	@echo "... src/KVServer.s"
-	@echo "... src/KvStore.o"
-	@echo "... src/KvStore.i"
-	@echo "... src/KvStore.s"
+	@echo "... src/KVStore.o"
+	@echo "... src/KVStore.i"
+	@echo "... src/KVStore.s"
+	@echo "... src/config.o"
+	@echo "... src/config.i"
+	@echo "... src/config.s"
 	@echo "... src/main_client.o"
 	@echo "... src/main_client.i"
 	@echo "... src/main_client.s"
-	@echo "... src/main_integrated_client.o"
-	@echo "... src/main_integrated_client.i"
-	@echo "... src/main_integrated_client.s"
 	@echo "... src/main_server.o"
 	@echo "... src/main_server.i"
 	@echo "... src/main_server.s"

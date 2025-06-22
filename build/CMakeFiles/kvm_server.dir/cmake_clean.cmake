@@ -1,8 +1,8 @@
 file(REMOVE_RECURSE
   "CMakeFiles/kvm_server.dir/src/KVServer.cpp.o"
   "CMakeFiles/kvm_server.dir/src/KVServer.cpp.o.d"
-  "CMakeFiles/kvm_server.dir/src/KvStore.cpp.o"
-  "CMakeFiles/kvm_server.dir/src/KvStore.cpp.o.d"
+  "CMakeFiles/kvm_server.dir/src/KVStore.cpp.o"
+  "CMakeFiles/kvm_server.dir/src/KVStore.cpp.o.d"
   "CMakeFiles/kvm_server.dir/src/main_server.cpp.o"
   "CMakeFiles/kvm_server.dir/src/main_server.cpp.o.d"
   "kvm_server"

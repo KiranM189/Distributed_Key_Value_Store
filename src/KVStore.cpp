@@ -1,4 +1,4 @@
-#include "kvstore.hpp"
+#include "KVStore.hpp"
 #include <filesystem>
 #include <iomanip>
 #include <sstream>
@@ -11,39 +11,60 @@ const std::string KvStore::PERSISTENT_FILE_PATH = "./kvstore_persistent.dat";
 const std::size_t MB = 1024 * 1024;
 const std::size_t DEFAULT_MEMORY_SIZE = 500 * MB;
 
-KvStore& KvStore::get_instance(std::size_t size, StorageMode mode) {
+// Modified get_instance method
+KvStore& KvStore::get_instance(std::size_t size, StorageMode mode, ConnectionMode conn_mode) {
     std::cout << "[get_instance] Initializing KvStore with " << (size / MB) << "MB in "
-              << (mode == StorageMode::PERSISTENT ? "PERSISTENT" : "MEMORY") << " mode\n";
-    static KvStore instance(size > 0 ? size : DEFAULT_MEMORY_SIZE, mode);
+              << (mode == StorageMode::PERSISTENT ? "PERSISTENT" : "MEMORY") << " mode as "
+              << (conn_mode == ConnectionMode::SERVER ? "SERVER" : "CLIENT") << "\n";
+    static KvStore instance(size > 0 ? size : DEFAULT_MEMORY_SIZE, mode, conn_mode);
     return instance;
 }
 
-KvStore::KvStore(std::size_t size, StorageMode mode) 
-    : total_memory_size(size), storage_mode(mode), 
+
+// Modified constructor
+KvStore::KvStore(std::size_t size, StorageMode mode, ConnectionMode conn_mode)
+    : total_memory_size(size), storage_mode(mode), conn_mode(conn_mode),
       memory_map_ptr(nullptr), persistent_map_ptr(nullptr) {
     
     std::cout << "[KvStore] Constructor started with " << (size / MB) << "MB allocation in "
-              << (mode == StorageMode::PERSISTENT ? "PERSISTENT" : "MEMORY") << " mode\n";
+              << (mode == StorageMode::PERSISTENT ? "PERSISTENT" : "MEMORY") << " mode as "
+              << (conn_mode == ConnectionMode::SERVER ? "SERVER" : "CLIENT") << "\n";
     
     try {
         if (mode == StorageMode::MEMORY) {
-            createMemoryStorage(size);
+            if (conn_mode == ConnectionMode::SERVER) {
+                createMemoryStorage(size);
+            } else {
+                connectToMemoryStorage();
+            }
         } else {
-            createPersistentStorage(size);
+            if (conn_mode == ConnectionMode::SERVER) {
+                createPersistentStorage(size);
+            } else {
+                connectToPersistentStorage();
+            }
         }
         
         // Handle mutex
-        named_mutex::remove(MUTEX_NAME);
+        if (conn_mode == ConnectionMode::SERVER) {
+            named_mutex::remove(MUTEX_NAME);
+        }
         named_mutex mutex(open_or_create, MUTEX_NAME);
-        std::cout << "[KvStore] Mutex created successfully\n";
+        std::cout << "[KvStore] Mutex " << (conn_mode == ConnectionMode::SERVER ? "created" : "connected") << " successfully\n";
         
         // Print initial memory stats
-        PrintMemoryStats("Initialization");
+        PrintMemoryStats(conn_mode == ConnectionMode::SERVER ? "Server Initialization" : "Client Connection");
         
     } catch (const interprocess_exception& e) {
         std::cout << "[KvStore] Caught interprocess exception: " << e.what() << std::endl;
-        std::cout << "[KvStore] Attempting recovery...\n";
         
+        if (conn_mode == ConnectionMode::CLIENT) {
+            std::cout << "[KvStore] Client failed to connect to existing storage. Server might not be running.\n";
+            throw;
+        }
+        
+        // Server recovery logic (existing code)
+        std::cout << "[KvStore] Server attempting recovery...\n";
         try {
             if (storage_mode == StorageMode::MEMORY) {
                 memory_storage = std::make_unique<managed_shared_memory>(open_only, "Project");
@@ -54,12 +75,10 @@ KvStore::KvStore(std::size_t size, StorageMode mode)
             }
             std::cout << "[KvStore] Opened existing storage\n";
             PrintMemoryStats("Opened Existing");
-            
         } catch (const interprocess_exception& e2) {
             std::cout << "[KvStore] Failed to open existing storage: " << e2.what() << std::endl;
             std::cout << "[KvStore] Creating new storage after cleanup\n";
             
-            // Clean up and try again
             cleanupStorage();
             named_mutex::remove(MUTEX_NAME);
             
@@ -172,6 +191,53 @@ void KvStore::createPersistentStorage(std::size_t size) {
         throw;
     }
 }
+
+
+// New method to connect to existing memory storage
+void KvStore::connectToMemoryStorage() {
+    try {
+        std::cout << "[KvStore] Attempting to connect to existing shared memory...\n";
+        memory_storage = std::make_unique<managed_shared_memory>(open_only, "Project");
+        
+        auto result = memory_storage->find<MemoryHashMap>("SharedMap");
+        if (result.first != nullptr) {
+            memory_map_ptr = result.first;
+            std::cout << "[KvStore] Successfully connected to existing shared memory with "
+                      << memory_map_ptr->size() << " entries\n";
+        } else {
+            throw interprocess_exception("SharedMap not found in existing shared memory");
+        }
+    } catch (const interprocess_exception& e) {
+        std::cout << "[KvStore] Failed to connect to existing shared memory: " << e.what() << std::endl;
+        throw;
+    }
+}
+
+// New method to connect to existing persistent storage
+void KvStore::connectToPersistentStorage() {
+    try {
+        std::cout << "[KvStore] Attempting to connect to existing persistent storage...\n";
+        
+        if (!std::filesystem::exists(PERSISTENT_FILE_PATH)) {
+            throw interprocess_exception("Persistent file does not exist");
+        }
+        
+        file_storage = std::make_unique<managed_mapped_file>(open_only, PERSISTENT_FILE_PATH.c_str());
+        
+        auto result = file_storage->find<MappedHashMap>("SharedMap");
+        if (result.first != nullptr) {
+            persistent_map_ptr = result.first;
+            std::cout << "[KvStore] Successfully connected to existing persistent storage with "
+                      << persistent_map_ptr->size() << " entries\n";
+        } else {
+            throw interprocess_exception("SharedMap not found in existing persistent storage");
+        }
+    } catch (const interprocess_exception& e) {
+        std::cout << "[KvStore] Failed to connect to existing persistent storage: " << e.what() << std::endl;
+        throw;
+    }
+}
+
 
 void KvStore::cleanupStorage() {
     if (storage_mode == StorageMode::MEMORY) {
@@ -548,6 +614,12 @@ void KvStore::ListAllKeys() const {
 }
 
 KvStore::~KvStore() {
+    // Check if we're in client mode - if so, don't clean up shared resources
+    if (conn_mode == ConnectionMode::CLIENT) {
+        std::cout << "[KvStore] Client disconnecting, leaving shared resources intact" << std::endl;
+        return;
+    }
+
     std::cout << "[KvStore] Destructor called, cleaning up resources" << std::endl;
     
     try {

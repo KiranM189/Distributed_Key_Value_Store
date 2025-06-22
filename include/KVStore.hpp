@@ -31,6 +31,11 @@ enum class StorageMode {
     PERSISTENT
 };
 
+enum class ConnectionMode {
+    SERVER,  // Create new storage
+    CLIENT   // Connect to existing storage
+};
+
 struct MemoryStats {
     std::size_t total_size;
     std::size_t used_memory;
@@ -45,6 +50,7 @@ private:
     
     std::size_t total_memory_size;
     StorageMode storage_mode;
+    ConnectionMode conn_mode;  // Add this line
     
     // Type-safe storage pointers
     std::unique_ptr<managed_shared_memory> memory_storage;
@@ -55,17 +61,20 @@ private:
     MappedHashMap* persistent_map_ptr;
     
     // Private constructor for singleton
-    KvStore(std::size_t size, StorageMode mode);
+    KvStore(std::size_t size, StorageMode mode, ConnectionMode conn_mode);
     
     // Helper methods
     void createMemoryStorage(std::size_t size);
     void createPersistentStorage(std::size_t size);
     void cleanupStorage();
     bool hasEnoughMemory(std::size_t needed_bytes) const;
+
+    void connectToMemoryStorage();
+    void connectToPersistentStorage();
     
 public:
     // Singleton access
-    static KvStore& get_instance(std::size_t size = 0, StorageMode mode = StorageMode::MEMORY);
+    static KvStore& get_instance(std::size_t size, StorageMode mode, ConnectionMode conn_mode = ConnectionMode::SERVER);
     
     // Disable copy constructor and assignment
     KvStore(const KvStore&) = delete;

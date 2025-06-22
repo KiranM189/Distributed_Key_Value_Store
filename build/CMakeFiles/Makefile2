@@ -54,10 +54,10 @@ RM = /snap/cmake/1468/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/ccbd/kvc
+CMAKE_SOURCE_DIR = /home/ccbd/kvq
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/ccbd/kvc/build
+CMAKE_BINARY_DIR = /home/ccbd/kvq/build
 
 #=============================================================================
 # Directory level rules for the build root directory
@@ -65,13 +65,11 @@ CMAKE_BINARY_DIR = /home/ccbd/kvc/build
 # The main recursive "all" target.
 all: CMakeFiles/kvm_server.dir/all
 all: CMakeFiles/kvm_client.dir/all
-all: CMakeFiles/kvm_client_integrated.dir/all
 .PHONY : all
 
 # The main recursive "codegen" target.
 codegen: CMakeFiles/kvm_server.dir/codegen
 codegen: CMakeFiles/kvm_client.dir/codegen
-codegen: CMakeFiles/kvm_client_integrated.dir/codegen
 .PHONY : codegen
 
 # The main recursive "preinstall" target.
@@ -81,7 +79,6 @@ preinstall:
 # The main recursive "clean" target.
 clean: CMakeFiles/kvm_server.dir/clean
 clean: CMakeFiles/kvm_client.dir/clean
-clean: CMakeFiles/kvm_client_integrated.dir/clean
 .PHONY : clean
 
 #=============================================================================
@@ -91,14 +88,14 @@ clean: CMakeFiles/kvm_client_integrated.dir/clean
 CMakeFiles/kvm_server.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_server.dir/build.make CMakeFiles/kvm_server.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_server.dir/build.make CMakeFiles/kvm_server.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/ccbd/kvc/build/CMakeFiles --progress-num=9,10,11,12 "Built target kvm_server"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/ccbd/kvq/build/CMakeFiles --progress-num=7,8,9,10 "Built target kvm_server"
 .PHONY : CMakeFiles/kvm_server.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/kvm_server.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/ccbd/kvc/build/CMakeFiles 4
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/ccbd/kvq/build/CMakeFiles 4
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/kvm_server.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/ccbd/kvc/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/ccbd/kvq/build/CMakeFiles 0
 .PHONY : CMakeFiles/kvm_server.dir/rule
 
 # Convenience name for target.
@@ -108,7 +105,7 @@ kvm_server: CMakeFiles/kvm_server.dir/rule
 # codegen rule for target.
 CMakeFiles/kvm_server.dir/codegen:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_server.dir/build.make CMakeFiles/kvm_server.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/ccbd/kvc/build/CMakeFiles --progress-num=9,10,11,12 "Finished codegen for target kvm_server"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/ccbd/kvq/build/CMakeFiles --progress-num=7,8,9,10 "Finished codegen for target kvm_server"
 .PHONY : CMakeFiles/kvm_server.dir/codegen
 
 # clean rule for target.
@@ -123,14 +120,14 @@ CMakeFiles/kvm_server.dir/clean:
 CMakeFiles/kvm_client.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_client.dir/build.make CMakeFiles/kvm_client.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_client.dir/build.make CMakeFiles/kvm_client.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/ccbd/kvc/build/CMakeFiles --progress-num=1,2,3,4 "Built target kvm_client"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/ccbd/kvq/build/CMakeFiles --progress-num=1,2,3,4,5,6 "Built target kvm_client"
 .PHONY : CMakeFiles/kvm_client.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/kvm_client.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/ccbd/kvc/build/CMakeFiles 4
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/ccbd/kvq/build/CMakeFiles 6
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/kvm_client.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/ccbd/kvc/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/ccbd/kvq/build/CMakeFiles 0
 .PHONY : CMakeFiles/kvm_client.dir/rule
 
 # Convenience name for target.
@@ -140,45 +137,13 @@ kvm_client: CMakeFiles/kvm_client.dir/rule
 # codegen rule for target.
 CMakeFiles/kvm_client.dir/codegen:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_client.dir/build.make CMakeFiles/kvm_client.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/ccbd/kvc/build/CMakeFiles --progress-num=1,2,3,4 "Finished codegen for target kvm_client"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/ccbd/kvq/build/CMakeFiles --progress-num=1,2,3,4,5,6 "Finished codegen for target kvm_client"
 .PHONY : CMakeFiles/kvm_client.dir/codegen
 
 # clean rule for target.
 CMakeFiles/kvm_client.dir/clean:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_client.dir/build.make CMakeFiles/kvm_client.dir/clean
 .PHONY : CMakeFiles/kvm_client.dir/clean
-
-#=============================================================================
-# Target rules for target CMakeFiles/kvm_client_integrated.dir
-
-# All Build rule for target.
-CMakeFiles/kvm_client_integrated.dir/all:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_client_integrated.dir/build.make CMakeFiles/kvm_client_integrated.dir/depend
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_client_integrated.dir/build.make CMakeFiles/kvm_client_integrated.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/ccbd/kvc/build/CMakeFiles --progress-num=5,6,7,8 "Built target kvm_client_integrated"
-.PHONY : CMakeFiles/kvm_client_integrated.dir/all
-
-# Build rule for subdir invocation for target.
-CMakeFiles/kvm_client_integrated.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/ccbd/kvc/build/CMakeFiles 4
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/kvm_client_integrated.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/ccbd/kvc/build/CMakeFiles 0
-.PHONY : CMakeFiles/kvm_client_integrated.dir/rule
-
-# Convenience name for target.
-kvm_client_integrated: CMakeFiles/kvm_client_integrated.dir/rule
-.PHONY : kvm_client_integrated
-
-# codegen rule for target.
-CMakeFiles/kvm_client_integrated.dir/codegen:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_client_integrated.dir/build.make CMakeFiles/kvm_client_integrated.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/ccbd/kvc/build/CMakeFiles --progress-num=5,6,7,8 "Finished codegen for target kvm_client_integrated"
-.PHONY : CMakeFiles/kvm_client_integrated.dir/codegen
-
-# clean rule for target.
-CMakeFiles/kvm_client_integrated.dir/clean:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kvm_client_integrated.dir/build.make CMakeFiles/kvm_client_integrated.dir/clean
-.PHONY : CMakeFiles/kvm_client_integrated.dir/clean
 
 #=============================================================================
 # Special targets to cleanup operation of make.
