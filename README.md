@@ -1,12 +1,12 @@
 # Distributed Key-Value Store
 
-A distributed, scalable Key-Value store using a shared memory map and enabling access across all nodes in a cluster using an RPC/RDMA framework.
+A distributed, scalable and persistent Key-Value store using a shared memory map and enabling access across all nodes in a cluster using an RPC/RDMA framework.
 
 ## Project Overview
 
 This project aims to design and implement a distributed key-value store with the following capabilities:
 
-- Dynamically add or remove nodes from the cluster.
+- Configure nodes based on requirements and preference.
 - Store a large number of key-value pairs using a shared memory map.
 - Distribute key-value pairs across nodes using `key % number_of_nodes` logic.
 - Keys are of type integer, and values are of type string.
@@ -18,11 +18,7 @@ This project aims to design and implement a distributed key-value store with the
 - PUT key-value pair  
 - GET key-value pair  
 - UPDATE key-value pair  
-- DELETE key-value pair  
-- Add node to the cluster  
-- Remove node from the cluster  
-- List all nodes  
-- Show distribution of keys across nodes  
+- DELETE key-value pair   
 
 ## Dependencies
 
@@ -32,11 +28,13 @@ Ensure the following dependencies are installed:
 - C++ Compiler with C++14 support (e.g., GCC or Clang)
 - Spack (for managing HPC dependencies)
 - Boost
+- nlohmann-json (via vcpkg)
 - Mochi libraries:
   - Margo
   - Argobots
   - Mercury
   - Thallium
+
 
 ## Install Dependencies with Spack
 
@@ -58,6 +56,22 @@ spack install boost
 ### Load the Spack environment
 ```
 spack load margo argobots mercury thallium boost
+```
+
+### Installing nlohmann-json (via vcpkg)
+```
+git clone https://github.com/microsoft/vcpkg.git
+cd vcpkg
+
+On windows:
+.\bootstrap-vcpkg.bat
+
+On linux/macOS:
+./bootstrap-vcpkg.sh
+
+./vcpkg install nlohmann-json
+
+
 ```
 
 ## Clone the repository and switch to the integration branch
@@ -83,31 +97,21 @@ make
 ```
 ./start_nodes.sh
 ```
-
-### Custom memory allocation
-```
-./start_nodes.sh -m 1G
-```
-
-### Custom build directory and memory allocation
-```
-./start_nodes.sh -d /path/to/build -m 500M
-```
-
 The above commands can be run on multiple machines to start the server across the cluster.
 
 ## Starting the client
 ### Default (will prompt to add nodes)
 ```
-./kvm_client_integrated
+./kvm_client
 ```
-
-### With predefined nodes
-./kvm_client_integrated --node ofi+tcp://192.168.1.100:8080 --node ofi+tcp://192.168.1.101:8080
-
 
 ## Stopping the server
 ```
-kill <SERVER_PID>
+CTRL+C
+```
+
+## Stopping the client
+```
+Type exit or click CTRL+C
 ```
 
